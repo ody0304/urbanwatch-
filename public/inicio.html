@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URBANWATCH</title>
+    <link rel="stylesheet" href="inicio-style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header bar -->
+        <header class="header">
+            <h1>URBANWATCH</h1>
+        </header>
+        
+        <!-- Logo area -->
+        <section class="logo-area">
+            <div class="logo-container">
+                <img src="imagenes/img-inicio.jpg" alt="San José del Cabo" class="logo-image">
+                <p class="main-message">¡Mejoremos juntos nuestra comunidad!</p>
+                <p class="sub-message">Reporta problemas urbanos, ve su seguimiento y solución.</p>
+            </div>
+        </section>
+        
+        <!-- Main content with profile options -->
+        <main class="main-content">
+            <div class="options-container">
+                
+                <!-- Ciudadano -->
+                <div class="option-card">
+                    <div class="icon-container">
+                        <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="#2C7A7B"/>
+                        </svg>
+                    </div>
+                    <h2>Ciudadano</h2>
+                    <p>Módulo de Consultas y Servicios para Ciudadanos</p>
+                    <div class="divider"></div>
+                    <a href="login-ciudadano.html" class="option-button ciudadano-btn">Acceder</a>
+                </div>
+                
+                <!-- Supervisor -->
+                <div class="option-card">
+                    <div class="icon-container">
+                        <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L4 5V11.09C4 16.14 7.41 20.85 12 22C16.59 20.85 20 16.14 20 11.09V5L12 2ZM14 15.18L12 13.18L10 15.18L9 13.09L7 12.09L9 10.09L7 8.09L9 7.09L10 5L12 7L14 5L15 7.09L17 8.09L15 10.09L17 12.09L15 13.09L14 15.18Z" fill="#F59E0B"/>
+                        </svg>
+                    </div>
+                    <h2>Supervisor</h2>
+                    <p>Módulo de Control y Supervisión de Actividades</p>
+                    <div class="divider"></div>
+                    <a href="login-supervisor.html" class="option-button supervisor-btn">Acceder</a>
+                </div>
+                
+                <!-- Empleado -->
+                <div class="option-card">
+                    <div class="icon-container">
+                        <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 6H16V4C16 2.89 15.11 2 14 2H10C8.89 2 8 2.89 8 4V6H4C2.89 6 2 6.89 2 8V19C2 20.11 2.89 21 4 21H20C21.11 21 22 20.11 22 19V8C22 6.89 21.11 6 20 6ZM10 4H14V6H10V4ZM12 18C10.34 18 9 16.66 9 15C9 13.34 10.34 12 12 12C13.66 12 15 13.34 15 15C15 16.66 13.66 18 12 18Z" fill="#107A30"/>
+                        </svg>
+                    </div>
+                    <h2>Empleado</h2>
+                    <p>Módulo de Gestión y Actividades Laborales</p>
+                    <div class="divider"></div>
+                    <a href="login-empleado.html" class="option-button empleado-btn">Acceder</a>
+                </div>
+                
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <p>© 2025 Copyright: <a href="#" class="footer-link">urbanwatch.mx</a></p>
+        </footer>
+    </div>
+
+    <!-- Simple script for active button effect -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get all option buttons
+            const buttons = document.querySelectorAll('.option-button');
+            
+            // Add click event listener to each button
+            buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remove active class from all buttons
+                    buttons.forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

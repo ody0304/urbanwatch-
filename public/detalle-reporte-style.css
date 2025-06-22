@@ -1,0 +1,325 @@
+/* Estilos generales */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f5f5f5;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* Encabezado */
+header {
+    background-color: #2050b3;
+    color: white;
+    padding: 1rem 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.logo {
+    width: 50px;
+    height: 50px;
+    background-color: white;
+    border-radius: 50%;
+}
+
+h1 {
+    font-size: 2rem;
+    text-align: center;
+}
+
+/* Contenido principal */
+main {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.reporte-banner {
+    background-color: #00c853;
+    color: white;
+    padding: 1rem;
+    text-align: center;
+    border-radius: 5px 5px 0 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+    animation: fadeIn 0.5s ease-in;
+}
+
+.reporte-contenido {
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.reporte-info {
+    padding: 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.info-detalle {
+    margin: 1rem 0;
+}
+
+.estado-badge {
+    display: inline-block;
+    background-color: #f7ca18;
+    color: #333;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: bold;
+    margin-top: 0.5rem;
+}
+
+.reporte-imagen {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+#reporte-img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+#reporte-img:hover {
+    transform: scale(1.02);
+    cursor: pointer;
+}
+
+.ver-mapa {
+    background-color: #2050b3;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.ver-mapa:hover {
+    background-color: #1a408e;
+}
+
+/* Timeline */
+.timeline {
+    padding: 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.timeline h3 {
+    margin-bottom: 1rem;
+}
+
+.timeline-container {
+    position: relative;
+    padding: 1rem 0;
+}
+
+.timeline-item {
+    display: flex;
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.timeline-icon {
+    min-width: 40px;
+    height: 40px;
+    background-color: #ccc;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    color: white;
+    z-index: 2;
+}
+
+.timeline-item.completo .timeline-icon {
+    background-color: #00c853;
+}
+
+.timeline-item.actual .timeline-icon {
+    background-color: #f7ca18;
+    color: #333;
+    animation: pulse 2s infinite;
+}
+
+.timeline-item.pendiente .timeline-icon {
+    background-color: #ccc;
+}
+
+.timeline-content {
+    flex-grow: 1;
+}
+
+.timeline-date {
+    color: #777;
+    font-size: 0.9rem;
+}
+
+/* Línea vertical conectora */
+.timeline-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 20px;
+    width: 2px;
+    background-color: #eee;
+    z-index: 1;
+}
+
+/* Comentarios */
+.comentarios-seccion {
+    padding: 1.5rem;
+}
+
+.comentarios-lista {
+    margin: 1rem 0;
+}
+
+.comentario {
+    border-left: 3px solid #2050b3;
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+    background-color: #f9f9f9;
+    border-radius: 0 5px 5px 0;
+    transition: transform 0.2s;
+}
+
+.comentario:hover {
+    transform: translateX(5px);
+}
+
+.comentario-header {
+    display: flex;
+    justify-content: space-between;
+    color: #777;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.btn-comentario {
+    background-color: #2050b3;
+    color: white;
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s, transform 0.2s;
+    display: block;
+    margin: 1rem 0;
+}
+
+.btn-comentario:hover {
+    background-color: #1a408e;
+    transform: translateY(-2px);
+}
+
+.comentario-info {
+    font-size: 0.9rem;
+    color: #777;
+    background-color: #f5f5f5;
+    padding: 0.7rem;
+    border-radius: 5px;
+    border-left: 3px solid #f7ca18;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 1rem;
+    color: #777;
+    margin-top: 2rem;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(247, 202, 24, 0.6);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(247, 202, 24, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(247, 202, 24, 0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .reporte-info, .timeline, .comentarios-seccion {
+        padding: 1rem;
+    }
+    
+    .timeline-item {
+        margin-bottom: 1rem;
+    }
+    
+    .timeline-icon {
+        min-width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
+    }
+    
+    .timeline-container::before {
+        left: 15px;
+    }
+}
+
+/* Efectos interactivos adicionales */
+.btn-comentario:active {
+    transform: translateY(1px);
+}
+
+.timeline-item.actual {
+    position: relative;
+}
+
+.timeline-item.actual::after {
+    content: 'Actual';
+    position: absolute;
+    right: 0;
+    top: 0;
+    background-color: #f7ca18;
+    color: #333;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+/* Efecto de hover para elementos interactivos */
+.timeline-item.actual:hover .timeline-content {
+    transform: translateX(5px);
+    transition: transform 0.3s;
+}

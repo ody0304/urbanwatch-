@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URBANWATCH - Detalle del Reporte</title>
+    <link rel="stylesheet" href="detalle-reporte-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <img src="logo.png" alt="Logo URBANWATCH" class="logo">
+            <h1>URBANWATCH</h1>
+        </div>
+    </header>
+
+    <main>
+        <div class="reporte-banner">
+            <h2 id="reporte-id">Reporte</h2>
+        </div>
+
+        <div class="reporte-contenido">
+            <div class="reporte-info">
+                <h3>Título del reporte</h3>
+                <div class="info-detalle"></div>
+                <div class="reporte-imagen">
+                    <img src="imagen-placeholder.jpg" alt="Imagen del reporte" id="reporte-img">
+                    <button class="ver-mapa"><i class="fas fa-map-marker-alt"></i> Ver en mapa</button>
+                </div>
+            </div>
+
+            <div class="timeline">
+                <h3>Estado del Reporte</h3>
+                <div class="timeline-container" id="timeline-container"></div>
+            </div>
+
+            <div class="comentarios-seccion">
+                <h3>Comentarios Ciudadanos</h3>
+                <div class="comentarios-lista" id="comentarios-lista"></div>
+                <button class="btn-comentario"><i class="fas fa-comment-alt"></i> Añadir Comentario</button>
+                <div class="comentario-info">
+                    <p><i class="fas fa-info-circle"></i> Solo ciudadanos pueden añadir comentarios. No hay respuestas oficiales en esta plataforma.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 URBANWATCH - Plataforma Ciudadana</p>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', async function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+
+        if (!id || isNaN(id)) {
+            alert('ID de reporte inválido o no proporcionado.');
+            window.location.href = 'consultar.html';
+            return;
+        }
+
+        try {
+            const [reporteRes, estadosRes, comentariosRes] = await Promise.all([
+                fetch(`/api/reporte-info/${id}`),
+                fetch(`/api/estado-reporte/${id}`),
+                fetch(`/api/comentarios/${id}`)
+            ]);
+
+            if (!reporteRes.ok) {
+                alert('Reporte no encontrado.');
+                window.location.href = 'consultar.html';
+                return;
+            }
+
+            const reporte = await reporteRes.json();
+            const estados = await estadosRes.json();
+            const comentarios = await comentariosRes.json();
+
+            document.getElementById('reporte-id').textContent = `Reporte #${id}`;
+            document.querySelector('.reporte-info h3').textContent = reporte.Titulo || 'Sin título';
+            document.querySelector('.info-detalle').innerHTML = `
+                <p><strong>Categoría:</strong> ${reporte.Categoria || 'No especificada'}</p>
+                <p><strong>Ubicación:</strong> ${reporte.Direccion || 'No disponible'}</p>
+                <span class="estado-badge">${estados[estados.length - 1]?.Estado || 'Pendiente'}</span>
+            `;
+
+            const imgTag = document.getElementById('reporte-img');
+            if (reporte.Imagen1 && reporte.Imagen1.startsWith('data:image')) {
+                imgTag.src = reporte.Imagen1;
+            } else {
+                imgTag.style.display = 'none';
+            }
+
+            const timelineContainer = document.getElementById('timeline-container');
+            estados.forEach((etapa, index) => {
+                const clase = index === estados.length - 1 ? 'actual' : 'completo';
+                timelineContainer.innerHTML += `
+                    <div class="timeline-item ${clase}">
+                        <div class="timeline-icon"><i class="fas fa-clock"></i></div>
+                        <div class="timeline-content">
+                            <h4>${etapa.Estado}</h4>
+                            <p class="timeline-date">${new Date(etapa.Fecha).toLocaleString()}</p>
+                        </div>
+                    </div>`;
+            });
+
+            const comentariosLista = document.getElementById('comentarios-lista');
+            comentarios.forEach(c => {
+                comentariosLista.innerHTML += `
+                    <div class="comentario">
+                        <div class="comentario-header">
+                            <span class="usuario"><i class="fas fa-user"></i> ${c.CorreoCiudadano}</span>
+                            <span class="fecha">${new Date(c.FechaComentario).toLocaleString()}</span>
+                        </div>
+                        <p>${c.Comentario}</p>
+                    </div>`;
+            });
+
+        } catch (error) {
+            console.error("Error al cargar los datos del reporte:", error);
+            alert('Hubo un problema al obtener la información del reporte.');
+            window.location.href = 'consultar.html';
+        }
+    });
+    </script>
+</body>
+</html>
+
+

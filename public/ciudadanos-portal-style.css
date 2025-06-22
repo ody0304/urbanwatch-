@@ -1,0 +1,262 @@
+/* Estilos generales */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    color: #333;
+}
+
+/* Cabecera */
+header {
+    background-color: #2457c5;
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: center; /* Centrado como solicitado */
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+}
+
+.logo-circle {
+    width: 50px;
+    height: 50px;
+    background-color: white;
+    border-radius: 50%;
+    margin-right: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.logo-text {
+    font-size: 32px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+/* Contenido principal con imagen de fondo */
+main {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 50px 20px;
+    background-color: rgba(255, 255, 255, 0.85); /* Fondo ligeramente transparente */
+    position: relative;
+}
+
+/* Imagen de fondo con transparencia ajustada */
+main::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('imagenes/img-ciudadanos.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.35; /* Aumentado de 0.15 a 0.35 para mayor visibilidad */
+    z-index: 1;
+}
+
+/* Sección de botones */
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    width: 100%;
+    max-width: 800px;
+    position: relative;
+    z-index: 2; /* Asegura que los botones estén por encima de la imagen de fondo */
+}
+
+.action-button {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    cursor: pointer;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); /* Sombra más pronunciada */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    /* Fondo semi-transparente para los botones */
+    background-color: rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(2px); /* Efecto de desenfoque detrás de los botones */
+    text-decoration: none; /* Eliminar subrayado de enlaces */
+    display: block; /* Para que funcione como bloque */
+}
+
+.action-button:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+.button-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+    transition: transform 0.3s ease;
+}
+
+.button-hover-effect {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: radial-gradient(circle at center, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.action-button.hover .button-hover-effect {
+    opacity: 1;
+}
+
+.action-button.hover .button-content {
+    transform: scale(1.05);
+}
+
+.button-icon {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 50px;
+    margin-bottom: 20px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    color: white;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.action-button:hover .button-icon {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
+}
+
+.button-text {
+    font-size: 26px; /* Texto ligeramente más grande */
+    font-weight: bold;
+    text-align: center;
+    color: white;
+    transition: transform 0.3s ease;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); /* Sombra para mejor legibilidad */
+}
+
+.action-button:hover .button-text {
+    transform: scale(1.05);
+}
+
+.report-button {
+    background-color: #3498db; /* Azul más atractivo en lugar de naranja */
+}
+
+.status-button {
+    background-color: #00c853; /* Verde para consulta */
+}
+
+/* Footer */
+footer {
+    background-color: #e8f0ff;
+    padding: 20px;
+    text-align: center;
+    border-top: 1px solid #d1d9e6;
+    position: relative;
+    z-index: 2; /* Asegura que el footer esté por encima de cualquier imagen de fondo */
+}
+
+footer p {
+    font-size: 20px;
+    color: #555;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Media queries para responsividad */
+@media (max-width: 768px) {
+    .action-buttons {
+        flex-direction: column;
+        align-items: center;
+        gap: 30px;
+    }
+    
+    .action-button {
+        width: 250px;
+        height: 250px;
+    }
+    
+    .button-icon {
+        width: 80px;
+        height: 80px;
+        font-size: 40px;
+    }
+    
+    .button-text {
+        font-size: 22px;
+    }
+    
+    /* Ajustes para hacer la imagen más visible en móviles */
+    main::before {
+        opacity: 0.25; /* Ligeramente menos visible en móviles para no dificultar la interacción */
+    }
+}
+
+/* Animación para destacar los botones cuando se carga la página */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.action-button {
+    animation: fadeInUp 0.8s ease forwards;
+}
+
+.action-button:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+/* Efecto de pulso para los botones */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2);
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(0, 0, 0, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    }
+}
+
+.action-button:active {
+    animation: pulse 0.8s;
+}

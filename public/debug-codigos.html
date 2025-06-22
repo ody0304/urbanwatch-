@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Códigos</title>
+</head>
+<body>
+    <h1>Debug - Verificar Códigos de Supervisor</h1>
+    
+    <h2>Ver todos los supervisores con sus códigos:</h2>
+    <button onclick="verSupervisores()">Ver Supervisores</button>
+    <div id="supervisores"></div>
+    
+    <h2>Probar verificación manual:</h2>
+    <form onsubmit="probarCodigo(event)">
+        <input type="email" id="email" placeholder="Email" required><br><br>
+        <select id="dependencia" required>
+            <option value="">Seleccionar dependencia</option>
+            <option value="agua">Agua</option>
+            <option value="alumbrado">Alumbrado Público</option>
+            <option value="baches">Baches y Calles</option>
+            <option value="basura">Basura y Limpieza</option>
+        </select><br><br>
+        <input type="text" id="codigo" placeholder="Código supervisor" required><br><br>
+        <button type="submit">Probar Código</button>
+    </form>
+    <div id="resultado"></div>
+
+    <script>
+        async function verSupervisores() {
+            try {
+                const response = await fetch('/api/debug-supervisores');
+                const data = await response.json();
+                document.getElementById('supervisores').innerHTML = 
+                    '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                document.getElementById('supervisores').innerHTML = 'Error: ' + error.message;
+            }
+        }
+
+        async function probarCodigo(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const dependencia = document.getElementById('dependencia').value;
+            const codigo = document.getElementById('codigo').value;
+            
+            try {
+                const response = await fetch('/api/cambiar-contrasena', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: email,
+                        dependencia: dependencia,
+                        codigoSupervisor: codigo,
+                        nuevaContrasena: 'test123'
+                    })
+                });
+                
+                const result = await response.json();
+                document.getElementById('resultado').innerHTML = 
+                    '<pre>Respuesta: ' + JSON.stringify(result, null, 2) + '</pre>';
+                    
+                console.log('Datos enviados:', { email, dependencia, codigo });
+                console.log('Respuesta:', result);
+                
+            } catch (error) {
+                document.getElementById('resultado').innerHTML = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

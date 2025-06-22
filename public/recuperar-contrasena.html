@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URBANWATCH - Recuperar Contraseña</title>
+    <link rel="stylesheet" href="login-supervisor-style.css">
+    <style>
+        .step {
+            display: none;
+        }
+        .step.active {
+            display: block;
+        }
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .back-link a {
+            color: #2457c5;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+        .info-text {
+            background-color: #f0f8ff;
+            border: 1px solid #2457c5;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #2457c5;
+            font-size: 14px;
+        }
+        .success-text {
+            background-color: #f0fff4;
+            border: 1px solid #22c55e;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #16a34a;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-circle"></div>
+            <div class="logo-text">URBANWATCH</div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="form-container">
+                <div class="panel panel-login">
+                    <div class="shield-icon-container">
+                        <div class="shield-svg-container">
+                            <svg width="160" height="190" viewBox="0 0 160 190" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M80 0L160 45V135L80 190L0 135V45L80 0Z" fill="#F59E0B"/>
+                                <path d="M50 60L110 130" stroke="white" stroke-width="20" stroke-linecap="round"/>
+                                <path d="M110 60L50 130" stroke="white" stroke-width="20" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <!-- Paso 1: Verificar email y dependencia -->
+                        <div id="step1" class="step active">
+                            <h1>Recuperar Contraseña</h1>
+                            <div class="info-text">
+                                <strong>Paso 1:</strong> Ingrese su email y seleccione su dependencia para verificar su identidad.
+                            </div>
+
+                            <form id="verify-form">
+                                <div class="form-group">
+                                    <label for="verify-email">Correo Electrónico:</label>
+                                    <input type="email" id="verify-email" name="email" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="verify-dependencia">Dependencia:</label>
+                                    <select id="verify-dependencia" name="dependencia" required>
+                                        <option value="">Seleccione una dependencia</option>
+                                        <option value="agua">Agua</option>
+                                        <option value="alumbrado">Alumbrado Público</option>
+                                        <option value="baches">Baches y Calles</option>
+                                        <option value="basura">Basura y Limpieza</option>
+                                    </select>
+                                </div>
+
+                                <button type="submit" class="action-button login-button">VERIFICAR DATOS</button>
+                            </form>
+                        </div>
+
+                        <!-- Paso 2: Ingresar código y nueva contraseña -->
+                        <div id="step2" class="step">
+                            <h1>Cambiar Contraseña</h1>
+                            <div class="success-text">
+                                <strong>Supervisor verificado:</strong> <span id="supervisor-nombre"></span><br>
+                                Ahora ingrese su código de supervisor y su nueva contraseña.
+                            </div>
+
+                            <form id="change-password-form">
+                                <div class="form-group">
+                                    <label for="codigo-supervisor">Código de Supervisor:</label>
+                                    <input type="text" id="codigo-supervisor" name="codigoSupervisor" required 
+                                           placeholder="Ej: AGUA2025" style="text-transform: uppercase;">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="nueva-contrasena">Nueva Contraseña:</label>
+                                    <input type="password" id="nueva-contrasena" name="nuevaContrasena" required
+                                           minlength="6" placeholder="Mínimo 6 caracteres">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="confirmar-contrasena">Confirmar Nueva Contraseña:</label>
+                                    <input type="password" id="confirmar-contrasena" name="confirmarContrasena" required
+                                           minlength="6" placeholder="Repita la nueva contraseña">
+                                </div>
+
+                                <button type="submit" class="action-button login-button">CAMBIAR CONTRASEÑA</button>
+                            </form>
+
+                            <div class="back-link">
+                                <a href="#" onclick="volverPaso1()">← Volver al paso anterior</a>
+                            </div>
+                        </div>
+
+                        <!-- Paso 3: Confirmación -->
+                        <div id="step3" class="step">
+                            <h1>¡Contraseña Actualizada!</h1>
+                            <div class="success-text">
+                                Su contraseña ha sido cambiada exitosamente.<br>
+                                Ya puede iniciar sesión con su nueva contraseña.
+                            </div>
+
+                            <button onclick="irALogin()" class="action-button login-button">IR AL LOGIN</button>
+                        </div>
+
+                        <div class="back-link">
+                            <a href="login-supervisor.html">← Volver al inicio de sesión</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let datosVerificados = {};
+
+        // Paso 1: Verificar email y dependencia
+        document.getElementById('verify-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('verify-email').value;
+            const dependencia = document.getElementById('verify-dependencia').value;
+            
+            try {
+                const response = await fetch('/api/verificar-supervisor', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, dependencia })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Guardar datos para el siguiente paso
+                    datosVerificados = { email, dependencia };
+                    document.getElementById('supervisor-nombre').textContent = result.nombre;
+                    
+                    // Mostrar paso 2
+                    mostrarPaso(2);
+                } else {
+                    alert(result.message || 'No se encontró un supervisor con esos datos');
+                }
+            } catch (error) {
+                alert('Error al verificar los datos: ' + error.message);
+            }
+        });
+
+        // Paso 2: Cambiar contraseña
+        document.getElementById('change-password-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const codigoSupervisor = document.getElementById('codigo-supervisor').value.toUpperCase();
+            const nuevaContrasena = document.getElementById('nueva-contrasena').value;
+            const confirmarContrasena = document.getElementById('confirmar-contrasena').value;
+            
+            // Verificar que las contraseñas coincidan
+            if (nuevaContrasena !== confirmarContrasena) {
+                alert('Las contraseñas no coinciden');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/cambiar-contrasena', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: datosVerificados.email,
+                        dependencia: datosVerificados.dependencia,
+                        codigoSupervisor,
+                        nuevaContrasena
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    mostrarPaso(3);
+                } else {
+                    alert(result.message || 'Código de supervisor incorrecto');
+                }
+            } catch (error) {
+                alert('Error al cambiar la contraseña: ' + error.message);
+            }
+        });
+
+        function mostrarPaso(numero) {
+            // Ocultar todos los pasos
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active');
+            });
+            
+            // Mostrar el paso solicitado
+            document.getElementById('step' + numero).classList.add('active');
+        }
+
+        function volverPaso1() {
+            mostrarPaso(1);
+            // Limpiar formularios
+            document.getElementById('verify-form').reset();
+            document.getElementById('change-password-form').reset();
+        }
+
+        function irALogin() {
+            window.location.href = 'login-supervisor.html';
+        }
+    </script>
+</body>
+</html>

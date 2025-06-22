@@ -1,0 +1,239 @@
+/* Reset básico y estilos generales */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f5f5f5;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Encabezado */
+.header {
+    background-color: #1e40af; /* Azul oscuro similar a bg-blue-800 */
+    color: white;
+    padding: 1rem;
+    text-align: center;
+}
+
+.header h1 {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+/* Sección del logo */
+.logo-area {
+    background-color: #d1d5db; /* Gris claro */
+    padding: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.logo-container {
+    text-align: center;
+}
+
+.logo-image {
+    max-width: 400px;
+    height: auto;
+    margin-bottom: 1rem;
+}
+
+.main-message {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.sub-message {
+    color: #4b5563;
+}
+
+/* Contenido principal */
+.main-content {
+    flex-grow: 1;
+    background-color: white;
+    padding: 2rem;
+}
+
+.options-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.option-card {
+    text-align: center;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.option-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.icon-container {
+    margin-bottom: 1rem;
+}
+
+.icon {
+    width: 4rem;
+    height: 4rem;
+}
+
+.option-card h2 {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.option-card p {
+    color: #6b7280;
+    margin-bottom: 1rem;
+}
+
+.divider {
+    border-top: 1px solid #e5e7eb;
+    width: 50%;
+    margin: 0.5rem auto 1rem;
+}
+
+/* Estilos para los botones */
+.option-button {
+    background-color: #3b82f6; /* Azul */
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.25rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: auto;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efecto al hacer hover */
+.option-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Efecto al hacer clic (active) */
+.option-button:active, 
+.option-button.active {
+    background-color: #e5e7eb; /* Gris claro */
+    color: #4b5563; /* Texto gris oscuro */
+    transform: translateY(1px) scale(1.05);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.25);
+}
+
+/* Estilos específicos para cada rol */
+.ciudadano-btn {
+    background-color: #2C7A7B; /* Azul verdoso para Ciudadano */
+}
+
+.ciudadano-btn:hover {
+    background-color: #285e61;
+}
+
+.ciudadano-btn:active,
+.ciudadano-btn.active {
+    background-color: #e5e7eb;
+    border: 2px solid #2C7A7B;
+}
+
+.supervisor-btn {
+    background-color: #F59E0B; /* Ámbar para Supervisor */
+}
+
+.supervisor-btn:hover {
+    background-color: #d97706;
+}
+
+.supervisor-btn:active,
+.supervisor-btn.active {
+    background-color: #e5e7eb;
+    border: 2px solid #F59E0B;
+}
+
+.empleado-btn {
+    background-color: #107A30; /* Verde para Empleado */
+}
+
+.empleado-btn:hover {
+    background-color: #0e6a2b;
+}
+
+.empleado-btn:active,
+.empleado-btn.active {
+    background-color: #e5e7eb;
+    border: 2px solid #107A30;
+}
+
+/* Footer */
+.footer {
+    background-color: white;
+    padding: 1rem;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.footer-link {
+    color: #3b82f6;
+    text-decoration: none;
+}
+
+.footer-link:hover {
+    text-decoration: underline;
+}
+
+/* Media queries para responsividad */
+@media (max-width: 768px) {
+    .options-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .logo-image {
+        max-width: 100%;
+    }
+}
+
+/* Animación sutil para el botón seleccionado */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    }
+}
+
+.option-button.active {
+    animation: pulse 1.5s infinite;
+}

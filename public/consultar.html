@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URBANWATCH - Consultar Estado de Reporte</title>
+    <link rel="stylesheet" href="consultar-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-circle"></div>
+            <div class="logo-text">URBANWATCH</div>
+        </div>
+    </header>
+
+    <div class="title-bar">
+        <div class="title-content">
+            <i class="fas fa-search-location"></i>
+            <h1>Consultar Estado de Reporte</h1>
+        </div>
+    </div>
+
+    <main>
+        <div class="card-container">
+            <div class="instructions-section">
+                <div class="instruction-icon">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <div class="instruction-text">
+                    <h2>Ingrese el número de reporte para consultar su estado</h2>
+                    <p>Puede encontrarlo en su correo de confirmación que recibió al enviar su reporte</p>
+                </div>
+            </div>
+
+            <div class="search-container">
+                <div class="search-form">
+                    <label for="report-number">
+                        <i class="fas fa-hashtag"></i> Número de Reporte:
+                    </label>
+                    <div class="input-container">
+                        <input type="text" id="report-number" name="report-number" placeholder="Ingrese el código aquí">
+                        <div class="input-underline"></div>
+                    </div>
+                    
+                    <button class="search-button">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nueva sección: Tabla de todos los reportes -->
+        <div class="reports-section">
+            <!-- Cambiar este título -->
+<h4 class="section-title">
+    <i class="fas fa-list-alt"></i>
+    Mis reportes
+</h4>
+            
+           <button class="load-reports-button" onclick="cargarTodosLosReportes()">
+    <i class="fas fa-sync-alt"></i> Cargar mis reportes
+</button>
+
+            <div class="table-container">
+                <table class="reports-table">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-hashtag"></i> ID</th>
+                            <th><i class="fas fa-tags"></i> Categoría</th>
+                            <th><i class="fas fa-chart-line"></i> Estado</th>
+                            <th><i class="fas fa-calendar"></i> Fecha</th>
+                            <th><i class="fas fa-cog"></i> Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportesTableBody">
+                        <!-- Los datos se cargarán dinámicamente -->
+                    </tbody>
+                </table>
+                
+                <div id="emptyState" class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <h5>No hay reportes para mostrar</h5>
+                    <p>Haga clic en "Cargar reportes" para ver todos los reportes recientes</p>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <div class="footer-content">
+            <p>© 2025 URBANWATCH - Todos los derechos reservados</p>
+        </div>
+    </footer>
+
+    <script>
+        const input = document.getElementById('report-number');
+        const searchButton = document.querySelector('.search-button');
+
+        input.addEventListener('focus', function () {
+            this.parentElement.classList.add('active');
+        });
+
+        input.addEventListener('blur', function () {
+            if (this.value === '') {
+                this.parentElement.classList.remove('active');
+            }
+        });
+
+        searchButton.addEventListener('click', async function () {
+            this.classList.add('clicked');
+
+            const id = input.value.trim();
+            if (id !== '') {
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
+
+                try {
+                    const response = await fetch(`/api/estado-reporte/${id}`);
+
+                    if (response.ok) {
+                        window.location.href = `detalle-reporte.html?id=${id}`;
+                    } else {
+                        this.innerHTML = '<i class="fas fa-times-circle"></i> No encontrado';
+                        setTimeout(() => {
+                            this.innerHTML = '<i class="fas fa-search"></i> Buscar';
+                            this.classList.remove('clicked');
+                        }, 1500);
+                    }
+                } catch (error) {
+                    console.error("❌ Error al buscar el reporte:", error);
+                    alert("Hubo un problema al consultar el reporte.");
+                    this.innerHTML = '<i class="fas fa-search"></i> Buscar';
+                    this.classList.remove('clicked');
+                }
+            } else {
+                this.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Ingrese un número';
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-search"></i> Buscar';
+                    this.classList.remove('clicked');
+                }, 1500);
+            }
+        });
+
+        // Función para cargar reportes del ciudadano autenticado
+async function cargarTodosLosReportes() {
+    const loadButton = document.querySelector('.load-reports-button');
+    const tableBody = document.getElementById('reportesTableBody');
+    const emptyState = document.getElementById('emptyState');
+    
+    // Obtener el correo del ciudadano desde localStorage
+    const correoCiudadano = localStorage.getItem('correoCiudadano');
+    
+    if (!correoCiudadano) {
+        alert('No se ha detectado una sesión de usuario. Por favor, inicie sesión nuevamente.');
+        window.location.href = 'login.html'; // o tu página de login
+        return;
+    }
+    
+    // Cambiar botón a estado de carga
+    loadButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
+    loadButton.disabled = true;
+
+    try {
+        // Usar el endpoint que filtra por correo del ciudadano
+        const response = await fetch(`/api/reportes-recientes/${encodeURIComponent(correoCiudadano)}`);
+        
+        if (response.ok) {
+            const reportes = await response.json();
+            
+            // Limpiar tabla
+            tableBody.innerHTML = '';
+            
+            if (reportes.length > 0) {
+                emptyState.style.display = 'none';
+                
+                reportes.forEach(reporte => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${reporte.IdReporte}</strong></td>
+                        <td>${reporte.Categoria}</td>
+                        <td>
+                            <span class="status-badge status-${getEstadoClass(reporte.Estado || 'Pendiente')}">
+                                ${reporte.Estado || 'Pendiente'}
+                            </span>
+                        </td>
+                        <td>${formatearFecha(reporte.FechaCreacion)}</td>
+                        <td>
+                            <button class="detail-button" onclick="verDetalle(${reporte.IdReporte})">
+                                <i class="fas fa-eye"></i> Ver
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                emptyState.innerHTML = `
+                    <i class="fas fa-inbox"></i>
+                    <h5>No tiene reportes registrados</h5>
+                    <p>Aún no ha enviado ningún reporte con este correo electrónico</p>
+                `;
+                emptyState.style.display = 'block';
+            }
+        } else {
+            throw new Error('Error al cargar reportes');
+        }
+    } catch (error) {
+        console.error("❌ Error al cargar reportes:", error);
+        alert("Hubo un problema al cargar sus reportes.");
+        emptyState.innerHTML = `
+            <i class="fas fa-exclamation-triangle"></i>
+            <h5>Error al cargar reportes</h5>
+            <p>No se pudieron cargar sus reportes. Intente nuevamente.</p>
+        `;
+        emptyState.style.display = 'block';
+    } finally {
+        // Restaurar botón
+        loadButton.innerHTML = '<i class="fas fa-sync-alt"></i> Cargar mis reportes';
+        loadButton.disabled = false;
+    }
+}
+
+        function getEstadoClass(estado) {
+            const clases = {
+                'Pendiente': 'pendiente',
+                'En proceso': 'proceso',
+                'Resuelto': 'resuelto',
+                'Cerrado': 'cerrado'
+            };
+            return clases[estado] || 'pendiente';
+        }
+
+        function formatearFecha(fecha) {
+            return new Date(fecha).toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        function verDetalle(idReporte) {
+            // Rellenar el campo de búsqueda individual y hacer scroll hacia arriba
+            document.getElementById('report-number').value = idReporte;
+            document.querySelector('.search-container').scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+            
+            // Activar el efecto visual del input
+            document.querySelector('.input-container').classList.add('active');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URBANWATCH - Reportar un Problema</title>
+    <link rel="stylesheet" href="reportar-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-circle"></div>
+            <div class="logo-text">URBANWATCH</div>
+        </div>
+    </header>
+
+    <div class="title-bar">
+        <h1>Reportar un Problema</h1>
+    </div>
+
+    <main>
+        <div class="report-container">
+            <h2>Seleccione categoría del problema</h2>
+            
+            <div class="categories-grid">
+                <div class="category-card" data-category="baches">
+                    <div class="category-icon orange">
+                        <span>B</span>
+                    </div>
+                    <div class="category-name">Baches y calles dañadas</div>
+                </div>
+                
+                <div class="category-card" data-category="alumbrado">
+                    <div class="category-icon blue-light">
+                        <span>A</span>
+                    </div>
+                    <div class="category-name">Alumbrado Público</div>
+                </div>
+                
+                <div class="category-card" data-category="basura">
+                    <div class="category-icon green">
+                        <span>V</span>
+                    </div>
+                    <div class="category-name">Basura y limpieza</div>
+                </div>
+                
+                <div class="category-card" data-category="agua">
+                    <div class="category-icon blue">
+                        <span>U</span>
+                    </div>
+                    <div class="category-name">Agua</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="progress-sidebar">
+            <div class="progress-steps">
+                <div class="step active">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Categoría</div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Ubicación</div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Detalles</div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-label">Imágenes</div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">5</div>
+                    <div class="step-label">Confirmar</div>
+                </div>
+            </div>
+            
+            <a href="ubicacion.html" id="next-button" class="next-button" disabled>Siguiente</a>
+        </div>
+    </main>
+
+    <script>
+        // Variables para almacenar el estado
+        let selectedCategory = null;
+        const nextButton = document.getElementById('next-button');
+        
+        // Selección de categoría
+        const categoryCards = document.querySelectorAll('.category-card');
+        
+        categoryCards.forEach(card => {
+            card.addEventListener('click', function() {
+                // Quitar selección previa
+                if (selectedCategory) {
+                    selectedCategory.classList.remove('selected');
+                }
+                
+                // Seleccionar esta categoría
+                this.classList.add('selected');
+                selectedCategory = this;
+                
+                // Habilitar botón siguiente
+                nextButton.removeAttribute('disabled');
+                
+                // Guardar la categoría seleccionada en localStorage para usar en páginas siguientes
+                localStorage.setItem('categoriaProblema', this.getAttribute('data-category'));
+            });
+        });
+        
+        // Prevenir navegación si no hay categoría seleccionada
+        nextButton.addEventListener('click', function(event) {
+            if (!selectedCategory) {
+                event.preventDefault();
+                alert('Por favor, seleccione una categoría antes de continuar.');
+            }
+        });
+    </script>
+</body>
+</html>

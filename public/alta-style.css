@@ -1,0 +1,221 @@
+/* Estilos generales */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background-color: #f2f5fa;
+}
+
+/* Encabezado */
+header {
+    background-color: #2150C2;
+    padding: 20px;
+    text-align: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-circle {
+    width: 70px;
+    height: 70px;
+    background-color: white;
+    border-radius: 50%;
+}
+
+.logo-text-container {
+    margin-left: 10px;
+}
+
+.logo-text {
+    color: white;
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+/* Subencabezado */
+.subheader {
+    background-color: #d8e6ff;
+    padding: 15px;
+    text-align: center;
+}
+
+.subheader h2 {
+    color: #2150C2;
+    font-size: 1.8rem;
+}
+
+/* Contenido principal */
+main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Pestañas */
+.tabs-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.tab {
+    padding: 15px 25px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    margin: 0 10px;
+    transition: all 0.3s ease;
+    color: #333;
+    background-color: #e2e2e2;
+}
+
+.tab.active {
+    background-color: #00c853;
+    color: white;
+}
+
+.tab:not(.active):hover {
+    background-color: #d0d0d0;
+}
+
+/* Formulario */
+.form-container {
+    background-color: white;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+}
+
+input[type="text"],
+input[type="email"] {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
+    background-color: #f2f2f2;
+    font-size: 16px;
+}
+
+.submit-btn {
+    background-color: #2150C2;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: block;
+    margin: 30px auto 0;
+}
+
+.submit-btn:hover {
+    background-color: #1a3f9e;
+}
+
+/* Lista de empleados */
+.employees-list-container {
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.employees-list-container h3 {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.5rem;
+}
+
+/* Tabla */
+.employees-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-header {
+    display: flex;
+    background-color: #f5f5f5;
+    font-weight: bold;
+    border-bottom: 2px solid #e1e1e1;
+}
+
+.table-row {
+    display: flex;
+    border-bottom: 1px solid #e1e1e1;
+}
+
+.table-cell {
+    flex: 1;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+}
+
+/* Estado vacío */
+.empty-state {
+    justify-content: center;
+    padding: 40px 0;
+}
+
+.empty-message {
+    text-align: center;
+    color: #777;
+}
+
+.empty-message i {
+    font-size: 2rem;
+    margin-bottom: 15px;
+    color: #999;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .tabs-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .tab {
+        margin: 5px 0;
+        width: 100%;
+        text-align: center;
+    }
+    
+    .table-header, .table-row {
+        flex-direction: column;
+    }
+    
+    .table-cell {
+        border-bottom: 1px solid #eee;
+    }
+    
+    .table-header .table-cell {
+        border-bottom: none;
+    }
+    
+    .table-row:last-child .table-cell:last-child {
+        border-bottom: none;
+    }
+}

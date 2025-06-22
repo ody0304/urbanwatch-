@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URBANWATCH - Detalles del Problema</title>
+    <link rel="stylesheet" href="detalles-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-circle"></div>
+            <div class="logo-text">URBANWATCH</div>
+        </div>
+    </header>
+
+    <div class="title-bar">
+        <h1>Reportar un Problema</h1>
+    </div>
+
+    <main>
+        <div class="report-container">
+            <h2>Detalles del Problema</h2>
+            <p class="subtitle">Proporcione la mayor información posible</p>
+            
+            <div class="details-form">
+                <div class="form-column">
+                    <div class="form-group">
+                        <label for="titulo">Título</label>
+                        <input type="text" id="titulo" name="titulo" placeholder="Ingrese un título descriptivo">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="descripcion">Descripción</label>
+                        <textarea id="descripcion" name="descripcion" rows="6" placeholder="Describa el problema con el mayor detalle posible"></textarea>
+                    </div>
+                </div>
+                
+                <div class="urgency-column">
+                    <h3>Nivel de urgencia</h3>
+                    
+                    <div class="urgency-options">
+                        <div class="urgency-option" data-level="bajo">
+                            <div class="option-circle"></div>
+                            <span>Bajo</span>
+                        </div>
+                        
+                        <div class="urgency-option" data-level="medio">
+                            <div class="option-circle"></div>
+                            <span>Medio</span>
+                        </div>
+                        
+                        <div class="urgency-option" data-level="alto">
+                            <div class="option-circle"></div>
+                            <span>Alto</span>
+                        </div>
+                        
+                        <div class="urgency-option" data-level="critico">
+                            <div class="option-circle"></div>
+                            <span>Crítico</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="navigation-buttons">
+                <a href="ubicacion.html" class="nav-button prev-button">
+                    <i class="fas fa-arrow-left"></i> Anterior
+                </a>
+                <a href="imagenes.html" class="nav-button next-button">
+                    Siguiente <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+        
+        <div class="progress-sidebar">
+            <div class="progress-steps">
+                <div class="step completed">
+                    <div class="step-number">
+                        <span class="checkmark">✓</span>
+                    </div>
+                    <div class="step-label">Categoría</div>
+                </div>
+                
+                <div class="step completed">
+                    <div class="step-number">
+                        <span class="checkmark">✓</span>
+                    </div>
+                    <div class="step-label">Ubicación</div>
+                </div>
+                
+                <div class="step active">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Detalles</div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-label">Imágenes</div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">5</div>
+                    <div class="step-label">Confirmar</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Manejar selección de nivel de urgencia
+        const urgencyOptions = document.querySelectorAll('.urgency-option');
+        let selectedUrgency = null;
+        
+        urgencyOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                // Quitar selección previa
+                if (selectedUrgency) {
+                    selectedUrgency.classList.remove('selected');
+                }
+                
+                // Seleccionar esta opción
+                this.classList.add('selected');
+                selectedUrgency = this;
+                
+                // Guardar el nivel de urgencia en localStorage
+                localStorage.setItem('nivelUrgencia', this.getAttribute('data-level'));
+            });
+        });
+        
+        // Guardar los datos del formulario al hacer clic en Siguiente
+        document.querySelector('.next-button').addEventListener('click', function(event) {
+            const titulo = document.getElementById('titulo').value;
+            const descripcion = document.getElementById('descripcion').value;
+            
+            // Validación básica
+            if (!titulo.trim() || !descripcion.trim() || !selectedUrgency) {
+                event.preventDefault();
+                alert('Por favor, complete todos los campos y seleccione un nivel de urgencia.');
+                return;
+            }
+            
+            // Guardar datos en localStorage
+            localStorage.setItem('tituloProblem', titulo);
+            localStorage.setItem('descripcionProblema', descripcion);
+        });
+        
+        // Cargar datos guardados si existen
+        window.addEventListener('DOMContentLoaded', function() {
+            const tituloGuardado = localStorage.getItem('tituloProblem');
+            const descripcionGuardada = localStorage.getItem('descripcionProblema');
+            const urgenciaGuardada = localStorage.getItem('nivelUrgencia');
+            
+            if (tituloGuardado) {
+                document.getElementById('titulo').value = tituloGuardado;
+            }
+            
+            if (descripcionGuardada) {
+                document.getElementById('descripcion').value = descripcionGuardada;
+            }
+            
+            if (urgenciaGuardada) {
+                const option = document.querySelector(`.urgency-option[data-level="${urgenciaGuardada}"]`);
+                if (option) {
+                    option.classList.add('selected');
+                    selectedUrgency = option;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URBANWATCH - Agregar Imágenes</title>
+    <link rel="stylesheet" href="imagenes-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-circle"></div>
+            <div class="logo-text">URBANWATCH</div>
+        </div>
+    </header>
+
+    <div class="title-bar">
+        <h1>Reportar un Problema</h1>
+    </div>
+
+    <main>
+        <div class="report-container">
+            <h2>Agregar Imágenes</h2>
+            <p class="subtitle">Opcional: Suba fotos del problema (máximo 3)</p>
+            
+            <div class="images-container">
+                <div class="image-upload-area" id="upload-area-1">
+                    <input type="file" id="image-upload-1" class="file-input" accept="image/*">
+                    <div class="upload-placeholder">
+                        <div class="plus-icon">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <div class="upload-text">Agregar imagen</div>
+                    </div>
+                    <div class="image-preview">
+                        <img src="" alt="Imagen previsualizada">
+                        <div class="remove-image">
+                            <i class="fas fa-times"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="image-upload-area" id="upload-area-2">
+                    <input type="file" id="image-upload-2" class="file-input" accept="image/*">
+                    <div class="upload-placeholder">
+                        <div class="plus-icon">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <div class="upload-text">Agregar imagen</div>
+                    </div>
+                    <div class="image-preview">
+                        <img src="" alt="Imagen previsualizada">
+                        <div class="remove-image">
+                            <i class="fas fa-times"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="image-upload-area" id="upload-area-3">
+                    <input type="file" id="image-upload-3" class="file-input" accept="image/*">
+                    <div class="upload-placeholder">
+                        <div class="plus-icon">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <div class="upload-text">Agregar imagen</div>
+                    </div>
+                    <div class="image-preview">
+                        <img src="" alt="Imagen previsualizada">
+                        <div class="remove-image">
+                            <i class="fas fa-times"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="image-guidelines">
+                <h3>Recomendaciones para las imágenes:</h3>
+                <ul>
+                    <li>Captura el problema desde diferentes ángulos</li>
+                    <li>Asegúrate de que la imagen sea clara y nítida</li>
+                    <li>Evita incluir personas en las fotos</li>
+                    <li>Incluye referencias de tamaño cuando sea posible</li>
+                </ul>
+            </div>
+            
+            <div class="navigation-buttons">
+                <a href="detalles.html" class="nav-button prev-button">
+                    <i class="fas fa-arrow-left"></i> Anterior
+                </a>
+                <a href="confirmar.html" class="nav-button next-button">
+                    Siguiente <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+        
+        <div class="progress-sidebar">
+            <div class="progress-steps">
+                <div class="step completed">
+                    <div class="step-number">
+                        <span class="checkmark">✓</span>
+                    </div>
+                    <div class="step-label">Categoría</div>
+                </div>
+                
+                <div class="step completed">
+                    <div class="step-number">
+                        <span class="checkmark">✓</span>
+                    </div>
+                    <div class="step-label">Ubicación</div>
+                </div>
+                
+                <div class="step completed">
+                    <div class="step-number">
+                        <span class="checkmark">✓</span>
+                    </div>
+                    <div class="step-label">Detalles</div>
+                </div>
+                
+                <div class="step active">
+                    <div class="step-number">4</div>
+                    <div class="step-label">Imágenes</div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">5</div>
+                    <div class="step-label">Confirmar</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+    // Manejar la carga de imágenes reales y previsualización
+    const fileInputs = document.querySelectorAll('.file-input');
+
+    fileInputs.forEach(input => {
+        const uploadArea = input.parentElement;
+        const preview = uploadArea.querySelector('.image-preview');
+        const previewImg = preview.querySelector('img');
+        const removeButton = preview.querySelector('.remove-image');
+
+        // Abrir selector de archivos al hacer clic en el área
+        uploadArea.addEventListener('click', function(e) {
+            if (e.target !== removeButton && !removeButton.contains(e.target) && !preview.classList.contains('active')) {
+                input.click();
+            }
+        });
+
+        // Manejar cambio en el input de archivo
+        input.addEventListener('change', function () {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    const base64String = e.target.result;
+                    previewImg.src = base64String;
+                    preview.classList.add('active');
+                    uploadArea.classList.add('has-image');
+
+                    const index = uploadArea.id.split('-')[2];
+                    localStorage.setItem(`imagen-${index}`, base64String);
+                };
+
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        // Eliminar imagen
+        removeButton.addEventListener('click', function (e) {
+            e.stopPropagation();
+            previewImg.src = '';
+            preview.classList.remove('active');
+            uploadArea.classList.remove('has-image');
+            input.value = '';
+
+            const index = uploadArea.id.split('-')[2];
+            localStorage.removeItem(`imagen-${index}`);
+        });
+    });
+
+    // Restaurar imágenes desde localStorage
+    document.addEventListener('DOMContentLoaded', function () {
+        for (let i = 1; i <= 3; i++) {
+            const base64 = localStorage.getItem(`imagen-${i}`);
+            if (base64) {
+                const uploadArea = document.getElementById(`upload-area-${i}`);
+                const preview = uploadArea.querySelector('.image-preview');
+                const previewImg = preview.querySelector('img');
+
+                previewImg.src = base64;
+                preview.classList.add('active');
+                uploadArea.classList.add('has-image');
+            }
+        }
+    });
+</script>
+</body>
+</html>

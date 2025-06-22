@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+  <title>URBANWATCH - Baja de Empleados</title>
+  <link rel="stylesheet" href="baja-style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <div class="logo-circle"></div>
+      <div class="logo-text-container">
+        <div class="logo-text" id="urbanwatch-title">URBANWATCH</div>
+      </div>
+    </div>
+    <div class="supervisor-info">
+      <span id="supervisor-correo">supervisor@ejemplo.com</span>
+    </div>
+  </header>
+  
+  <div class="subheader">
+    <h2>Sistema de Alta y Baja de Empleados</h2>
+  </div>
+
+  <main>
+    <div class="tabs-container">
+      <a href="alta.html" class="tab">Alta de empleado</a>
+      <a href="baja.html" class="tab active">Baja de empleado</a>
+    </div>
+    
+    <div class="form-container">
+      <form id="baja-empleado-form">
+        <div class="form-group">
+          <label for="id-empleado">ID Empleado</label>
+          <input type="text" id="id-empleado" name="id-empleado" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="correo">Correo Electrónico:</label>
+          <input type="email" id="correo" name="correo" required>
+        </div>
+        
+        <button type="submit" class="submit-btn">Dar de Baja Empleado</button>
+      </form>
+    </div>
+    
+    <div class="employees-list-container">
+      <h3>Empleados Dados de Baja (0)</h3>
+      <div class="employees-table">
+        <div class="table-header">
+          <div class="table-cell">ID</div>
+          <div class="table-cell">Nombre</div>
+          <div class="table-cell">Correo</div>
+          <div class="table-cell">Departamento</div>
+        </div>
+        <div class="table-body">
+          <div class="table-row empty-state">
+            <div class="table-cell" colspan="4">
+              <div class="empty-message">
+                <i class="fas fa-info-circle"></i>
+                <p>No hay empleados dados de baja en este momento</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let supervisorSesion = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Cargar datos del supervisor
+      const supData = sessionStorage.getItem('supervisor');
+      if (!supData) {
+        alert('Debe iniciar sesión primero.');
+        return window.location.href = 'login-supervisor.html';
+      }
+
+      supervisorSesion = JSON.parse(supData);
+      document.getElementById('supervisor-correo').textContent = supervisorSesion.correo;
+
+      // Una vez listo, cargamos las bajas
+      cargarBajas();
+
+      // Listener del formulario de baja
+      document.getElementById('baja-empleado-form')
+        .addEventListener('submit', async e => {
+          e.preventDefault();
+          
+          const idEmpleado = document.getElementById('id-empleado').value;
+          const correo = document.getElementById('correo').value;
+          
+          try {
+            const res = await fetch('/api/baja-empleado', {
+              method: 'POST',
+              headers: {'Content-Type':'application/json'},
+              body: JSON.stringify({ idEmpleado, correo })
+            });
+
+            const text = await res.text();
+            if (!res.ok) throw new Error(text);
+
+            alert('Empleado dado de baja correctamente');
+            e.target.reset();
+            cargarBajas();
+          } catch (err) {
+            console.error('Error en baja:', err);
+            alert('Error al dar de baja: ' + err.message);
+          }
+        });
+    });
+
+    async function cargarBajas() {
+      try {
+        const res = await fetch(`/api/bajas/${supervisorSesion.dependencia}`);
+        if (!res.ok) throw new Error('No se pudo obtener bajas');
+        const bajas = await res.json();
+
+        const tbody = document.querySelector('.table-body');
+        const titulo = document.querySelector('.employees-list-container h3');
+        titulo.textContent = `Empleados Dados de Baja (${bajas.length})`;
+
+        // Limpiar
+        tbody.innerHTML = '';
+        if (bajas.length === 0) {
+          tbody.innerHTML = `
+            <div class="table-row empty-state">
+              <div class="table-cell" colspan="4">
+                <div class="empty-message">
+                  <i class="fas fa-info-circle"></i>
+                  <p>No hay empleados dados de baja en este momento</p>
+                </div>
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        // Rellenar filas
+        bajas.forEach(emp => {
+          tbody.innerHTML += `
+            <div class="table-row">
+              <div class="table-cell">${emp.IdEmpleado}</div>
+              <div class="table-cell">${emp.Nombre || '—'}</div>
+              <div class="table-cell">${emp.Correo}</div>
+              <div class="table-cell">${emp.Departamento || '—'}</div>
+            </div>
+          `;
+        });
+      } catch (err) {
+        console.error(err);
+        alert('Error al cargar la lista de empleados dados de baja');
+      }
+    }
+
+    function cerrarSesion() {
+      sessionStorage.removeItem('supervisor');
+      window.location.href = 'login-supervisor.html';
+    }
+  </script>
+</body>
+</html>

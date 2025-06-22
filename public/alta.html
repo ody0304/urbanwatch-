@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URBANWATCH - Alta de Empleados</title>
+    <link rel="stylesheet" href="alta-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-circle"></div>
+            <div class="logo-text-container">
+                <div class="logo-text" id="urbanwatch-title">URBANWATCH</div>
+            </div>
+        </div>
+        <div class="supervisor-info">
+            <span id="supervisor-correo">supervisor@ejemplo.com</span>
+        </div>
+    </header>
+    
+    <div class="subheader">
+        <h2>Sistema de Alta y Baja de Empleados</h2>
+    </div>
+
+    <main>
+        <div class="tabs-container">
+            <a href="alta.html" class="tab active">Alta de empleado</a>
+            <a href="baja.html" class="tab">Baja de empleado</a>
+        </div>
+        
+        <div class="form-container">
+            <form id="alta-empleado-form">
+                <div class="form-group">
+                    <label for="nombre">Nombre Completo:</label>
+                    <input type="text" id="nombre" name="nombre" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="correo">Correo Electrónico:</label>
+                    <input type="email" id="correo" name="correo" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="id-empleado">ID Empleado:</label>
+                    <input type="text" id="id-empleado" name="idEmpleado" required>
+                </div>
+                
+                <button type="submit" class="submit-btn">Registrar Empleado</button>
+            </form>
+        </div>
+        
+        <div class="employees-list-container">
+            <h3>Lista de Empleados (0)</h3>
+            <div class="employees-table">
+                <div class="table-header">
+                    <div class="table-cell">ID</div>
+                    <div class="table-cell">Nombre</div>
+                    <div class="table-cell">Correo</div>
+                    <div class="table-cell">Departamento</div>
+                </div>
+                
+                <div class="table-body">
+                    <div class="table-row empty-state">
+                        <div class="table-cell" colspan="4">
+                            <div class="empty-message">
+                                <i class="fas fa-info-circle"></i>
+                                <p>No hay empleados registrados en este momento</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Variables globales para la sesión del supervisor
+        let supervisorSesion = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Página cargada, verificando sessionStorage...');
+
+            const supervisorData = sessionStorage.getItem('supervisor');
+            console.log('📦 Datos encontrados:', supervisorData);
+
+            if (supervisorData) {
+                try {
+                    supervisorSesion = JSON.parse(supervisorData);
+                    console.log('✅ Supervisor parseado:', supervisorSesion);
+
+                    // Mostrar correo del supervisor
+                    document.getElementById('supervisor-correo').textContent = supervisorSesion.correo;
+
+                    // Cargar empleados para su dependencia
+                    cargarEmpleados();
+                } catch (error) {
+                    console.error('💥 Error al parsear supervisor:', error);
+                }
+            } else {
+                console.log('⚠️ No se encontraron datos de supervisor en sessionStorage');
+            }
+        });
+
+        async function cargarEmpleados() {
+            console.log('🔍 Intentando cargar empleados...');
+
+            if (!supervisorSesion) {
+                console.log('❌ supervisorSesion no está definido');
+                return;
+            }
+
+            console.log('👤 Supervisor actual:', supervisorSesion);
+            console.log('🏢 Dependencia a buscar:', supervisorSesion.dependencia);
+
+            try {
+                const url = `/api/empleados/${supervisorSesion.dependencia}`;
+                console.log('🌐 URL de consulta:', url);
+
+                const res = await fetch(url);
+                console.log('📡 Respuesta del servidor:', res.status, res.statusText);
+
+                const empleados = await res.json();
+                console.log('👥 Empleados obtenidos:', empleados);
+
+                const tbody = document.querySelector('.table-body');
+                const titulo = document.querySelector('.employees-list-container h3');
+
+                tbody.innerHTML = '';
+                titulo.textContent = `Lista de Empleados (${empleados.length})`;
+
+                if (empleados.length === 0) {
+                    tbody.innerHTML = `
+                        <div class="table-row empty-state">
+                            <div class="table-cell" colspan="4">
+                                <div class="empty-message">
+                                    <i class="fas fa-info-circle"></i>
+                                    <p>No hay empleados registrados en este momento</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                empleados.forEach(emp => {
+                    tbody.innerHTML += `
+                        <div class="table-row">
+                            <div class="table-cell">${emp.IdEmpleado}</div>
+                            <div class="table-cell">${emp.Nombre}</div>
+                            <div class="table-cell">${emp.Correo}</div>
+                            <div class="table-cell">${emp.Departamento}</div>
+                        </div>
+                    `;
+                });
+
+                console.log('🎉 Tabla actualizada correctamente');
+            } catch (error) {
+                console.error('💥 Error al cargar empleados:', error);
+                alert('Error al cargar la lista de empleados');
+            }
+        }
+
+        document.getElementById('alta-empleado-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            console.log('📝 Enviando formulario...');
+
+            const nombre = document.getElementById('nombre').value;
+            const correo = document.getElementById('correo').value;
+            const idEmpleado = document.getElementById('id-empleado').value;
+
+            // Usa la dependencia real del supervisor
+            const dependencia = supervisorSesion.dependencia;
+            console.log('📤 Enviando empleado con dependencia:', dependencia);
+
+            try {
+                const response = await fetch('/api/alta-empleado', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre, correo, idEmpleado, dependencia })
+                });
+
+                const responseText = await response.text();
+                console.log('🔄 Respuesta del servidor:', responseText);
+
+                if (response.ok) {
+                    alert('Empleado registrado correctamente');
+                    this.reset();
+                    cargarEmpleados();
+                } else {
+                    alert('Error: ' + responseText);
+                }
+            } catch (error) {
+                console.error('💥 Error al registrar empleado:', error);
+                alert('Error al registrar el empleado: ' + error.message);
+            }
+        });
+
+        function cerrarSesion() {
+            sessionStorage.removeItem('supervisor');
+            window.location.href = 'login-supervisor.html';
+        }
+    </script>
+</body>
+</html>

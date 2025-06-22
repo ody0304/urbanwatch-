@@ -1,0 +1,232 @@
+/* Estilos generales */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Cabecera */
+header {
+    background-color: #2457c5;
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+}
+
+.logo-circle {
+    width: 40px;
+    height: 40px;
+    background-color: white;
+    border-radius: 50%;
+    margin-right: 15px;
+}
+
+.logo-text {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+/* Contenedor principal */
+main {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    width: 100%;
+    max-width: 900px;
+    perspective: 1000px;
+    margin: 20px auto;
+}
+
+/* Contenedor de formularios */
+.form-container {
+    position: relative;
+    width: 100%;
+    height: 600px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* Paneles */
+.panel {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    background-color: white;
+    z-index: 1;
+}
+
+.panel-register {
+    z-index: 2;
+}
+
+/* Sección de formulario */
+.form-section {
+    width: 100%;
+    padding: 40px 60px;
+    display: flex;
+    flex-direction: column;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 25px;
+    font-size: 26px;
+    font-weight: 500;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 16px;
+    color: #555;
+}
+
+input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    background-color: #f5f5f5;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+input:focus {
+    outline: none;
+    border-color: #2457c5;
+    box-shadow: 0 0 0 2px rgba(36, 87, 197, 0.2);
+}
+
+/* Botones */
+.action-button {
+    width: 100%;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 30px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+.register-button {
+    background-color: #2C7A7B;
+    color: white;
+}
+
+.register-button:hover {
+    background-color: #1e6566;
+    box-shadow: 0 4px 8px rgba(44, 122, 123, 0.3);
+}
+
+.cancel-button {
+    background-color: white;
+    color: #333;
+    border: 1px solid #ddd;
+    border-radius: 30px;
+    padding: 13px 30px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    text-decoration: none;
+    display: block;
+}
+
+.cancel-button:hover {
+    background-color: #f0f0f0;
+    border-color: #ccc;
+}
+
+/* Sección de botones */
+.buttons-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    gap: 15px;
+}
+
+/* Panel de alternancia */
+.toggle-panel {
+    margin-top: 25px;
+    text-align: center;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.toggle-panel p {
+    margin-bottom: 10px;
+    color: #666;
+}
+
+.toggle-button {
+    background: none;
+    border: none;
+    color: #2457c5;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: underline;
+    transition: color 0.3s;
+    display: inline-block;
+}
+
+.toggle-button:hover {
+    color: #1a3f8f;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .panel {
+        flex-direction: column;
+    }
+    
+    .form-section {
+        width: 100%;
+        padding: 30px;
+    }
+    
+    .buttons-section {
+        flex-direction: column;
+    }
+    
+    .cancel-button, .action-button {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .form-container {
+        height: auto;
+        min-height: 650px;
+    }
+}
