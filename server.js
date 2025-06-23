@@ -1,12 +1,12 @@
 const express = require('express');
-const sql = require('mssql/msnodesqlv8');
+const sql = require('mssql');
 const cors = require('cors');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const dbConfig = require('./dbconfig');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 console.log("Driver activo:", dbConfig.driver || 'default (tedious)');
 
@@ -15,6 +15,8 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 
 require('dotenv').config();
+console.log("Conectando con config:");
+console.log(dbConfig);
 
 // Configuración de correo electrónico
 const transporter = nodemailer.createTransport({
@@ -29,13 +31,19 @@ const transporter = nodemailer.createTransport({
 app.get('/api/prueba', async (req, res) => {
     try {
         await sql.connect(dbConfig);
-        const result = await sql.query('SELECT TOP 5 * FROM TU_TABLA');
+        const result = await sql.query('SELECT TOP 5 * FROM Ciudadanos');
         res.json(result.recordset);
     } catch (err) {
         console.error(err);
         res.status(500).send('Error al conectar con la base de datos');
     }
 });
+
+// Ruta de comprobación de salud
+app.get('/saludz', (req, res) => {
+  res.status(200).send('OK');
+});
+
 
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
