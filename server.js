@@ -44,10 +44,18 @@ app.get('/saludz', (req, res) => {
   res.status(200).send('OK');
 });
 
+const path = require('path');
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'inicio.html'));
+});
 
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
+
+
+
 
 async function crearTablas() {
     try {
