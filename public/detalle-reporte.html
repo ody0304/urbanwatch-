@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 
   try {
-    // 2) Traer reporte, estados y comentarios en paralelo
+    // 2) Pedir datos del reporte, estados y comentarios
     const [reporteRes, estadosRes, comentariosRes] = await Promise.all([
       fetch(`/api/reporte-info/${id}`),
       fetch(`/api/estado-reporte/${id}`),
@@ -85,17 +85,18 @@ document.addEventListener('DOMContentLoaded', async function () {
       return;
     }
 
+    // 3) Parsear JSON
     const reporte   = await reporteRes.json();
     const estados   = await estadosRes.json();
     let comentarios = await comentariosRes.json();
 
-    // 3) Datos de control de anonimato y rol
+    // 4) Datos de anonimato y rol
     const correoAutor     = reporte.CorreoCiudadano;
     const anonimatoActivo = reporte.EsAnonimo === 1;
     const correoCiudadano = localStorage.getItem('correoCiudadano');
-    const empleadoData    = localStorage.getItem('empleadoData');
+    // Nota: ya no usamos empleadoData para ocultar el botón
 
-    // 4) Renderizar encabezado e info general
+    // 5) Renderizar encabezado e info general
     document.getElementById('reporte-id').textContent = `Reporte #${id}`;
     document.querySelector('.reporte-info h3').textContent = reporte.Titulo || 'Sin título';
     document.querySelector('.info-detalle').innerHTML = `
@@ -112,7 +113,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       imgTag.style.display = 'none';
     }
 
-    // 5) Renderizar timeline
+    // 6) Renderizar timeline
     const timelineContainer = document.getElementById('timeline-container');
     timelineContainer.innerHTML = '';
     estados.forEach((etapa, i) => {
@@ -127,18 +128,16 @@ document.addEventListener('DOMContentLoaded', async function () {
         </div>`;
     });
 
-    // 6) Renderizar comentarios con anonimato condicional
+    // 7) Renderizar comentarios con anonimato condicional
     const comentariosLista = document.getElementById('comentarios-lista');
     function renderComentarios(list) {
       comentariosLista.innerHTML = list.map(c => {
         let quien;
-        if (empleadoData) {
-          // Si es empleado, todo va como "Anónimo"
+        if (!correoCiudadano) {
+          // Empleado o anónimo: todo se ve como "Anónimo"
           quien = 'Anónimo';
         } else {
-          // Si es ciudadano:
-          // - Si reporte es anónimo y c es del autor original → "Anónimo"
-          // - Sino, mostrar correo del comentarista
+          // Ciudadano: solo anonimizar sus propios comentarios si el reporte era anónimo
           quien = (anonimatoActivo && c.CorreoCiudadano === correoAutor)
             ? 'Anónimo'
             : c.CorreoCiudadano;
@@ -146,12 +145,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         return `
           <div class="comentario">
             <div class="comentario-header">
-              <span class="usuario">
-                <i class="fas fa-user"></i> ${quien}
-              </span>
-              <span class="fecha">
-                ${new Date(c.FechaComentario).toLocaleString()}
-              </span>
+              <span class="usuario"><i class="fas fa-user"></i> ${quien}</span>
+              <span class="fecha">${new Date(c.FechaComentario).toLocaleString()}</span>
             </div>
             <p>${c.Comentario}</p>
           </div>
@@ -160,42 +155,42 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
     renderComentarios(comentarios);
 
-    // 7) Control del botón "Añadir Comentario"
+    // 8) Control del botón "Añadir Comentario"
     const btnCom    = document.getElementById('btn-comentario');
     const avisoInfo = document.querySelector('.comentario-info');
 
-    if (!correoCiudadano || empleadoData) {
-      // Empleado o visita sin sesión de ciudadano → ocultar botón y aviso
+    if (!correoCiudadano) {
+      // Si no hay correoCiudadano → esconder botón y aviso
       if (btnCom)    btnCom.style.display    = 'none';
       if (avisoInfo) avisoInfo.style.display = 'none';
     } else {
-      // Ciudadano autenticado → permitir comentar
-      btnCom.addEventListener('click', async () => {
-        const texto = prompt('Escribe tu comentario:');
-        if (!texto) return;
-
-        const resp = await fetch('/api/comentarios', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            idReporte: id,
-            correoCiudadano: correoCiudadano,
-            comentario: texto
-          })
-        });
-
-        if (resp.ok) {
-          // Actualizar array y re-render
-          comentarios.push({
-            CorreoCiudadano: correoCiudadano,
-            Comentario: texto,
-            FechaComentario: new Date().toISOString()
+      // Si es ciudadano → mostrar botón y permitir comentar
+      if (btnCom) {
+        btnCom.style.display = 'inline-block';
+        btnCom.addEventListener('click', async () => {
+          const texto = prompt('Escribe tu comentario:');
+          if (!texto) return;
+          const resp = await fetch('/api/comentarios', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              idReporte: id,
+              correoCiudadano: correoCiudadano,
+              comentario: texto
+            })
           });
-          renderComentarios(comentarios);
-        } else {
-          alert('Error al guardar tu comentario.');
-        }
-      });
+          if (resp.ok) {
+            comentarios.push({
+              CorreoCiudadano: correoCiudadano,
+              Comentario: texto,
+              FechaComentario: new Date().toISOString()
+            });
+            renderComentarios(comentarios);
+          } else {
+            alert('Error al guardar tu comentario.');
+          }
+        });
+      }
     }
 
   } catch (err) {
@@ -205,9 +200,6 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 });
 </script>
-
-
-
 
 </body>
 </html>
