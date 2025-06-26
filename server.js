@@ -947,21 +947,37 @@ app.post('/api/comentarios', async (req, res) => {
 
 // Endpoint para obtener información general de un reporte por ID
 app.get('/api/reporte-info/:id', async (req, res) => {
-    const { id } = req.params;
-    try {
-        await sql.connect(dbConfig);
-        const result = await sql.query`
-            SELECT * FROM Reportes WHERE IdReporte = ${id}
-        `;
-        if (result.recordset.length === 0) {
-            return res.status(404).send('Reporte no encontrado');
-        }
-        res.status(200).json(result.recordset[0]);
-    } catch (err) {
-        console.error("❌ Error al obtener datos del reporte:", err);
-        res.status(500).send('Error al obtener datos del reporte');
+  const { id } = req.params;
+  try {
+    await sql.connect(dbConfig);
+    const result = await sql.query`
+      SELECT
+        r.IdReporte,
+        r.Categoria,
+        r.Direccion,
+        r.Titulo,
+        r.Descripcion,
+        r.Urgencia,
+        -- Aquí agregas estas dos columnas
+        r.CorreoCiudadano,
+        r.EsAnonimo,
+        r.Imagen1,
+        r.Imagen2,
+        r.Imagen3,
+        r.FechaCreacion
+      FROM Reportes r
+      WHERE r.IdReporte = ${id}
+    `;
+    if (result.recordset.length === 0) {
+      return res.status(404).json({ error: 'Reporte no encontrado' });
     }
+    res.json(result.recordset[0]);
+  } catch (err) {
+    console.error('Error en GET /api/reporte-info:', err);
+    res.status(500).json({ error: 'Error al obtener el reporte' });
+  }
 });
+
 
 // Endpoint para obtener reportes del ciudadano autenticado
 app.get('/api/reportes-recientes/:correo', async (req, res) => {

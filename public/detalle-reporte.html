@@ -50,7 +50,7 @@
         <p>&copy; 2025 URBANWATCH - Plataforma Ciudadana</p>
     </footer>
 
-    <script>
+<script>
 document.addEventListener('DOMContentLoaded', async function () {
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id');
@@ -75,11 +75,16 @@ document.addEventListener('DOMContentLoaded', async function () {
             return;
         }
 
+        // 2) Parsear respuestas
         const reporte     = await reporteRes.json();
         const estados     = await estadosRes.json();
         let comentarios   = await comentariosRes.json();
 
-        // 2) Renderizar encabezado e información general
+        // Guardamos autor y flag de anonimato
+        const correoAutor     = reporte.CorreoCiudadano;
+        const anonimatoActivo = reporte.EsAnonimo === 1;
+
+        // 3) Renderizar encabezado e información general
         document.getElementById('reporte-id').textContent = `Reporte #${id}`;
         document.querySelector('.reporte-info h3').textContent = reporte.Titulo || 'Sin título';
         document.querySelector('.info-detalle').innerHTML = `
@@ -94,7 +99,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             imgTag.style.display = 'none';
         }
 
-        // 3) Renderizar timeline
+        // 4) Renderizar timeline
         const timelineContainer = document.getElementById('timeline-container');
         estados.forEach((etapa, index) => {
             const clase = index === estados.length - 1 ? 'actual' : 'completo';
@@ -108,35 +113,42 @@ document.addEventListener('DOMContentLoaded', async function () {
                 </div>`;
         });
 
-        // 4) Renderizar comentarios existentes
+        // 5) Renderizar comentarios existentes, aplicando anonimato
         const comentariosLista = document.getElementById('comentarios-lista');
         function renderComentarios(list) {
-            comentariosLista.innerHTML = list.map(c => `
-                <div class="comentario">
-                    <div class="comentario-header">
-                        <span class="usuario"><i class="fas fa-user"></i> ${c.CorreoCiudadano}</span>
-                        <span class="fecha">${new Date(c.FechaComentario).toLocaleString()}</span>
+            comentariosLista.innerHTML = list.map(c => {
+                // Si el reporte fue anónimo y el comentario viene del autor, mostramos "Anónimo"
+                const quien = (anonimatoActivo && c.CorreoCiudadano === correoAutor)
+                    ? 'Anónimo'
+                    : c.CorreoCiudadano;
+                return `
+                    <div class="comentario">
+                        <div class="comentario-header">
+                            <span class="usuario"><i class="fas fa-user"></i> ${quien}</span>
+                            <span class="fecha">${new Date(c.FechaComentario).toLocaleString()}</span>
+                        </div>
+                        <p>${c.Comentario}</p>
                     </div>
-                    <p>${c.Comentario}</p>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
         renderComentarios(comentarios);
 
-        // 5) Controlar botón “Añadir Comentario”
-        const btnCom = document.querySelector('.btn-comentario');
+        // 6) Control del botón “Añadir Comentario”
+        const btnCom = document.getElementById('btn-comentario');
+        const avisoInfo = document.querySelector('.comentario-info');
         const correoCiudadano = localStorage.getItem('correoCiudadano');
+
         if (!correoCiudadano) {
             // No es ciudadano → ocultar botón y mensaje
             btnCom.style.display = 'none';
-            document.querySelector('.comentario-info').style.display = 'none';
+            avisoInfo.style.display = 'none';
         } else {
-            // Sí es ciudadano → mostrar botón y registrar handler
+            // Sí es ciudadano → manejar clicks
             btnCom.addEventListener('click', async () => {
                 const texto = prompt('Escribe tu comentario:');
                 if (!texto) return;
 
-                // Enviar comentario al backend
                 const resp = await fetch('/api/comentarios', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -146,13 +158,15 @@ document.addEventListener('DOMContentLoaded', async function () {
                         comentario: texto
                     })
                 });
+
                 if (resp.ok) {
-                    // Añadir en el DOM sin recargar
-                    comentarios.push({
+                    // Añadir en el DOM y volver a aplicar anonimato si aplica
+                    const nuevoComent = {
                         CorreoCiudadano: correoCiudadano,
                         Comentario: texto,
                         FechaComentario: new Date().toISOString()
-                    });
+                    };
+                    comentarios.push(nuevoComent);
                     renderComentarios(comentarios);
                 } else {
                     alert('Error al guardar tu comentario.');
@@ -167,6 +181,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 });
 </script>
+
 
 </body>
 </html>
