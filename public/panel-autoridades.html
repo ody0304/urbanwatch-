@@ -125,28 +125,46 @@
         }
 
 async function cargarReportes() {
-    try {
-        // 1) Tomamos el campo correcto y lo pasamos a minúsculas
-        const categoria = empleadoActual.Departamento.toLowerCase();
-
-        // 2) Llamamos al endpoint con la categoría
-        const response = await fetch(`/api/reportes-empleado/${categoria}`);
-        if (!response.ok) throw new Error('Error al cargar reportes');
-
-        reportes = await response.json();
-        reportesFiltrados = [...reportes];
-
-        mostrarReportes();
-        actualizarEstadisticas();
-    } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('reportes-container').innerHTML = `
-            <div class="error">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>Error al cargar los reportes</p>
-            </div>
-        `;
+  try {
+    // 1) Mapeo de nombre a código
+    const depto = empleadoActual.Departamento.toLowerCase();
+    let categoriaCode;
+    switch (depto) {
+      case 'baches y calles':
+        categoriaCode = 'baches';
+        break;
+      case 'agua':
+        categoriaCode = 'agua';
+        break;
+      case 'basura y limpieza':
+        categoriaCode = 'basura';
+        break;
+      case 'alumbrado público':
+        categoriaCode = 'alumbrado';
+        break;
+      default:
+        throw new Error(`Departamento desconocido: ${empleadoActual.Departamento}`);
     }
+
+    // 2) Llamada correcta al API
+    const response = await fetch(`/api/reportes-empleado/${categoriaCode}`);
+    if (!response.ok) throw new Error('Error al cargar reportes');
+
+    reportes = await response.json();
+    reportesFiltrados = [...reportes];
+
+    mostrarReportes();
+    actualizarEstadisticas();
+
+  } catch (error) {
+    console.error('Error en cargarReportes():', error);
+    document.getElementById('reportes-container').innerHTML = `
+      <div class="error">
+        <i class="fas fa-exclamation-triangle"></i>
+        <p>Error al cargar los reportes</p>
+      </div>
+    `;
+  }
 }
 
 
