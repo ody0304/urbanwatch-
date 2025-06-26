@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 
   try {
-    // 2) Pedir datos del reporte, estados y comentarios
+    // 2) Peticiones en paralelo
     const [reporteRes, estadosRes, comentariosRes] = await Promise.all([
       fetch(`/api/reporte-info/${id}`),
       fetch(`/api/estado-reporte/${id}`),
@@ -90,11 +90,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     const estados   = await estadosRes.json();
     let comentarios = await comentariosRes.json();
 
-    // 4) Datos de anonimato y rol
+    // 4) Datos de rol y anonimato
     const correoAutor     = reporte.CorreoCiudadano;
     const anonimatoActivo = reporte.EsAnonimo === 1;
+    const empleadoData    = localStorage.getItem('empleadoData');
     const correoCiudadano = localStorage.getItem('correoCiudadano');
-    // Nota: ya no usamos empleadoData para ocultar el botón
 
     // 5) Renderizar encabezado e info general
     document.getElementById('reporte-id').textContent = `Reporte #${id}`;
@@ -128,16 +128,18 @@ document.addEventListener('DOMContentLoaded', async function () {
         </div>`;
     });
 
-    // 7) Renderizar comentarios con anonimato condicional
+    // 7) Renderizar comentarios con anonimato
     const comentariosLista = document.getElementById('comentarios-lista');
     function renderComentarios(list) {
       comentariosLista.innerHTML = list.map(c => {
         let quien;
-        if (!correoCiudadano) {
-          // Empleado o anónimo: todo se ve como "Anónimo"
+        if (empleadoData) {
+          // Empleado ve todo como Anónimo
           quien = 'Anónimo';
         } else {
-          // Ciudadano: solo anonimizar sus propios comentarios si el reporte era anónimo
+          // Ciudadano ve así:
+          // - Si reporte anónimo y autor original → Anónimo
+          // - Si no → correo real
           quien = (anonimatoActivo && c.CorreoCiudadano === correoAutor)
             ? 'Anónimo'
             : c.CorreoCiudadano;
@@ -159,12 +161,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     const btnCom    = document.getElementById('btn-comentario');
     const avisoInfo = document.querySelector('.comentario-info');
 
-    if (!correoCiudadano) {
-      // Si no hay correoCiudadano → esconder botón y aviso
+    if (empleadoData) {
+      // 8a) Empleado → ocultar siempre
       if (btnCom)    btnCom.style.display    = 'none';
       if (avisoInfo) avisoInfo.style.display = 'none';
-    } else {
-      // Si es ciudadano → mostrar botón y permitir comentar
+    } else if (correoCiudadano) {
+      // 8b) Ciudadano → mostrar y permitir
       if (btnCom) {
         btnCom.style.display = 'inline-block';
         btnCom.addEventListener('click', async () => {
@@ -191,6 +193,10 @@ document.addEventListener('DOMContentLoaded', async function () {
           }
         });
       }
+    } else {
+      // 8c) Ningún rol válido → ocultar
+      if (btnCom)    btnCom.style.display    = 'none';
+      if (avisoInfo) avisoInfo.style.display = 'none';
     }
 
   } catch (err) {
@@ -200,6 +206,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 });
 </script>
+
 
 </body>
 </html>
