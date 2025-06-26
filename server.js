@@ -958,19 +958,19 @@ app.get('/api/reporte-info/:id', async (req, res) => {
         r.Titulo,
         r.Descripcion,
         r.Urgencia,
-        -- Aquí agregas estas dos columnas
         r.CorreoCiudadano,
         r.EsAnonimo,
         r.Imagen1,
-        r.Imagen2,
-        r.Imagen3,
         r.FechaCreacion
       FROM Reportes r
       WHERE r.IdReporte = ${id}
     `;
-    if (result.recordset.length === 0) {
+
+    if (!result.recordset.length) {
       return res.status(404).json({ error: 'Reporte no encontrado' });
     }
+
+    // Si usas JOIN para traer el primer estado, inclúyelo aquí...
     res.json(result.recordset[0]);
   } catch (err) {
     console.error('Error en GET /api/reporte-info:', err);

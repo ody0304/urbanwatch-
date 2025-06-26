@@ -70,10 +70,12 @@ document.addEventListener('DOMContentLoaded', async function () {
         ]);
 
         if (!reporteRes.ok) {
-            alert('Reporte no encontrado.');
-            window.location.href = 'consultar.html';
-            return;
-        }
+  const text = await reporteRes.text();
+  console.error('[/api/reporte-info] error:', reporteRes.status, text);
+  alert(`Error ${reporteRes.status}: ${text}`);
+  return;
+}
+
 
         // 2) Parsear respuestas
         const reporte     = await reporteRes.json();
