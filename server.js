@@ -1001,7 +1001,7 @@ app.get('/api/reportes-recientes/:correo', async (req, res) => {
 
 // Endpoint para obtener reportes filtrados por dependencia del empleado
 app.get('/api/reportes-empleado/:categoria', async (req, res) => {
-  const { categoria } = req.params;    // ej. 'agua', 'baches', ...
+  const { categoria } = req.params;
   try {
     await sql.connect(dbConfig);
     const result = await sql.query`
@@ -1010,7 +1010,11 @@ app.get('/api/reportes-empleado/:categoria', async (req, res) => {
         r.Titulo,
         r.Direccion,
         r.Urgencia,
-        CASE WHEN r.EsAnonimo = 1 THEN NULL ELSE r.CorreoCiudadano END AS CorreoCiudadano,
+        -- Aquí: si es anónimo devolvemos la cadena 'Anónimo' en lugar del correo
+        CASE 
+          WHEN r.EsAnonimo = 1 THEN 'Anónimo' 
+          ELSE r.CorreoCiudadano 
+        END AS CorreoCiudadano,
         r.EsAnonimo,
         r.FechaCreacion,
         er.Estado AS EstadoActual
@@ -1020,16 +1024,18 @@ app.get('/api/reportes-empleado/:categoria', async (req, res) => {
           IdReporte, Estado, Fecha,
           ROW_NUMBER() OVER (PARTITION BY IdReporte ORDER BY Fecha DESC) as rn
         FROM EstadoReporte
-      ) er ON r.IdReporte = er.IdReporte AND er.rn = 1
-      WHERE r.Categoria = ${categoria}    -- aquí filtramos por Categoría
+      ) er
+        ON r.IdReporte = er.IdReporte AND er.rn = 1
+      WHERE r.Categoria = ${categoria}
       ORDER BY r.FechaCreacion DESC
     `;
     res.json(result.recordset);
   } catch (err) {
-    console.error('❌ Error en /api/reportes-empleado:', err.message);
+    console.error('❌ Error en GET /api/reportes-empleado:', err.message);
     res.status(500).json({ error: 'Error al obtener reportes' });
   }
 });
+
 
 
 // Endpoint para actualizar el estado de un reporte
