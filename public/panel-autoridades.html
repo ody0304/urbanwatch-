@@ -124,26 +124,31 @@
             cargarReportes();
         }
 
-        async function cargarReportes() {
-            try {
-                const response = await fetch(`/api/reportes-empleado/${empleadoActual.Dependencia}`);
-                if (!response.ok) throw new Error('Error al cargar reportes');
+async function cargarReportes() {
+    try {
+        // 1) Tomamos el campo correcto y lo pasamos a minúsculas
+        const categoria = empleadoActual.Departamento.toLowerCase();
 
-                reportes = await response.json();
-                reportesFiltrados = [...reportes];
+        // 2) Llamamos al endpoint con la categoría
+        const response = await fetch(`/api/reportes-empleado/${categoria}`);
+        if (!response.ok) throw new Error('Error al cargar reportes');
 
-                mostrarReportes();
-                actualizarEstadisticas();
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('reportes-container').innerHTML = `
-                    <div class="error">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p>Error al cargar los reportes</p>
-                    </div>
-                `;
-            }
-        }
+        reportes = await response.json();
+        reportesFiltrados = [...reportes];
+
+        mostrarReportes();
+        actualizarEstadisticas();
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('reportes-container').innerHTML = `
+            <div class="error">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Error al cargar los reportes</p>
+            </div>
+        `;
+    }
+}
+
 
         function filtrarPorEstado(estado) {
             const nombres = {

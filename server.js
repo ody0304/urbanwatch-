@@ -780,70 +780,78 @@ crearTablaReportes();
 
 
 app.post('/api/guardar-reporte', async (req, res) => {
-    const {
-        categoria,
-        direccion,
-        titulo,
-        descripcion,
-        urgencia,
-        imagen1,
-        imagen2,
-        imagen3,
-        correoCiudadano
-    } = req.body;
+  const {
+    categoria,
+    direccion,
+    titulo,
+    descripcion,
+    urgencia,
+    imagen1,
+    imagen2,
+    imagen3,
+    correoCiudadano,
+    esAnonimo          // ← lo añades aquí
+  } = req.body;
 
-    try {
-        await sql.connect(dbConfig);
+  try {
+    await sql.connect(dbConfig);
 
-        // ✅ Insertar y obtener el ID generado automáticamente
-        const result = await sql.query`
-            INSERT INTO Reportes (Categoria, Direccion, Titulo, Descripcion, Urgencia, Imagen1, Imagen2, Imagen3, CorreoCiudadano)
-            OUTPUT INSERTED.IdReporte
-            VALUES (
-                ${categoria},
-                ${direccion},
-                ${titulo},
-                ${descripcion},
-                ${urgencia},
-                ${imagen1},
-                ${imagen2},
-                ${imagen3},
-                ${correoCiudadano}
-            )
-        `;
+    // INSERT incluyendo EsAnonimo y FechaCreacion
+    const result = await sql.query`
+      INSERT INTO Reportes (
+        Categoria,
+        Direccion,
+        Titulo,
+        Descripcion,
+        Urgencia,
+        Imagen1,
+        Imagen2,
+        Imagen3,
+        CorreoCiudadano,
+        EsAnonimo,        -- nueva columna
+        FechaCreacion
+      )
+      OUTPUT INSERTED.IdReporte
+      VALUES (
+        ${categoria},
+        ${direccion},
+        ${titulo},
+        ${descripcion},
+        ${urgencia},
+        ${imagen1},
+        ${imagen2},
+        ${imagen3},
+        ${correoCiudadano},
+        ${esAnonimo ? 1 : 0},   -- almacena 1 o 0
+        GETDATE()
+      )
+    `;
+    const nuevoId = result.recordset[0].IdReporte;
 
-        const nuevoId = result.recordset[0].IdReporte;
+    // Responde primero al cliente
+    res.status(200).json({ success: true, idReporte: nuevoId });
 
-        // ✅ Enviar correo de confirmación
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.GMAIL_USER,
-                pass: process.env.GMAIL_PASS
-            }
+    // Luego, en background, envía el correo
+    (async () => {
+      try {
+        await transporter.sendMail({
+          from:    'urbanwatch@noreply.com',
+          to:      correoCiudadano,
+          subject: `Confirmación de Reporte URBANWATCH`,
+          text:    `Gracias por su reporte. Su ID es ${nuevoId}`
         });
-
-        const mailOptions = {
-            from: 'urbanwatch@noreply.com',
-            to: correoCiudadano,
-            subject: `Confirmación de Reporte URBANWATCH`,
-            text: `Gracias por su reporte. El ID de seguimiento es: ${nuevoId}`
-        };
-
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                console.error("❌ Error al enviar el correo:", error);
-            } else {
-                console.log("📧 Correo enviado: " + info.response);
-            }
-        });
-
-        res.status(200).json({ success: true, idReporte: nuevoId });
-    } catch (err) {
-        console.error("❌ Error al guardar el reporte:", err);
-        res.status(500).send('Error al guardar el reporte');
-    }
+        console.log("📧 Correo enviado");
+      } catch (mailErr) {
+        console.warn("⚠️ Error al enviar correo:", mailErr.message);
+      }
+    })();
+  } catch (err) {
+    console.error("❌ Error al guardar el reporte:", err);
+    res.status(500).json({ success: false, message: 'Error al guardar el reporte' });
+  }
 });
+
+
 
 // 1. Crear tabla en SQL Server para el seguimiento de estado de reportes y comentarios
 
@@ -991,43 +999,35 @@ app.get('/api/reportes-recientes/:correo', async (req, res) => {
 // =====================================================
 
 // Endpoint para obtener reportes filtrados por dependencia del empleado
-app.get('/api/reportes-empleado/:dependencia', async (req, res) => {
-    const { dependencia } = req.params;
-    try {
-        await sql.connect(dbConfig);
-
-        const result = await sql.query`
-            SELECT 
-                r.IdReporte,
-                r.Categoria,
-                r.Direccion,
-                r.Titulo,
-                r.Descripcion,
-                r.Urgencia,
-                -- Si es anónimo, devolvemos NULL en lugar del correo
-                CASE WHEN r.EsAnonimo = 1 THEN NULL ELSE r.CorreoCiudadano END AS CorreoCiudadano,
-                r.EsAnonimo,
-                r.FechaCreacion,
-                er.Estado as EstadoActual,
-                er.Fecha as FechaUltimoEstado
-            FROM Reportes r
-            LEFT JOIN (
-                SELECT 
-                    IdReporte, 
-                    Estado, 
-                    Fecha,
-                    ROW_NUMBER() OVER (PARTITION BY IdReporte ORDER BY Fecha DESC) as rn
-                FROM EstadoReporte
-            ) er ON r.IdReporte = er.IdReporte AND er.rn = 1
-            WHERE r.Categoria = ${dependencia}
-            ORDER BY r.FechaCreacion DESC
-        `;
-
-        res.json(result.recordset);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Error al obtener reportes' });
-    }
+app.get('/api/reportes-empleado/:categoria', async (req, res) => {
+  const { categoria } = req.params;    // ej. 'agua', 'baches', ...
+  try {
+    await sql.connect(dbConfig);
+    const result = await sql.query`
+      SELECT 
+        r.IdReporte,
+        r.Titulo,
+        r.Direccion,
+        r.Urgencia,
+        CASE WHEN r.EsAnonimo = 1 THEN NULL ELSE r.CorreoCiudadano END AS CorreoCiudadano,
+        r.EsAnonimo,
+        r.FechaCreacion,
+        er.Estado AS EstadoActual
+      FROM Reportes r
+      LEFT JOIN (
+        SELECT 
+          IdReporte, Estado, Fecha,
+          ROW_NUMBER() OVER (PARTITION BY IdReporte ORDER BY Fecha DESC) as rn
+        FROM EstadoReporte
+      ) er ON r.IdReporte = er.IdReporte AND er.rn = 1
+      WHERE r.Categoria = ${categoria}    -- aquí filtramos por Categoría
+      ORDER BY r.FechaCreacion DESC
+    `;
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('❌ Error en /api/reportes-empleado:', err.message);
+    res.status(500).json({ error: 'Error al obtener reportes' });
+  }
 });
 
 
