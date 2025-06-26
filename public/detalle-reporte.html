@@ -51,80 +51,123 @@
     </footer>
 
     <script>
-    document.addEventListener('DOMContentLoaded', async function () {
-        const urlParams = new URLSearchParams(window.location.search);
-        const id = urlParams.get('id');
+document.addEventListener('DOMContentLoaded', async function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
 
-        if (!id || isNaN(id)) {
-            alert('ID de reporte inválido o no proporcionado.');
+    if (!id || isNaN(id)) {
+        alert('ID de reporte inválido o no proporcionado.');
+        window.location.href = 'consultar.html';
+        return;
+    }
+
+    try {
+        // 1) Traer datos del reporte, estados y comentarios
+        const [reporteRes, estadosRes, comentariosRes] = await Promise.all([
+            fetch(`/api/reporte-info/${id}`),
+            fetch(`/api/estado-reporte/${id}`),
+            fetch(`/api/comentarios/${id}`)
+        ]);
+
+        if (!reporteRes.ok) {
+            alert('Reporte no encontrado.');
             window.location.href = 'consultar.html';
             return;
         }
 
-        try {
-            const [reporteRes, estadosRes, comentariosRes] = await Promise.all([
-                fetch(`/api/reporte-info/${id}`),
-                fetch(`/api/estado-reporte/${id}`),
-                fetch(`/api/comentarios/${id}`)
-            ]);
+        const reporte     = await reporteRes.json();
+        const estados     = await estadosRes.json();
+        let comentarios   = await comentariosRes.json();
 
-            if (!reporteRes.ok) {
-                alert('Reporte no encontrado.');
-                window.location.href = 'consultar.html';
-                return;
-            }
-
-            const reporte = await reporteRes.json();
-            const estados = await estadosRes.json();
-            const comentarios = await comentariosRes.json();
-
-            document.getElementById('reporte-id').textContent = `Reporte #${id}`;
-            document.querySelector('.reporte-info h3').textContent = reporte.Titulo || 'Sin título';
-            document.querySelector('.info-detalle').innerHTML = `
-                <p><strong>Categoría:</strong> ${reporte.Categoria || 'No especificada'}</p>
-                <p><strong>Ubicación:</strong> ${reporte.Direccion || 'No disponible'}</p>
-                <span class="estado-badge">${estados[estados.length - 1]?.Estado || 'Pendiente'}</span>
-            `;
-
-            const imgTag = document.getElementById('reporte-img');
-            if (reporte.Imagen1 && reporte.Imagen1.startsWith('data:image')) {
-                imgTag.src = reporte.Imagen1;
-            } else {
-                imgTag.style.display = 'none';
-            }
-
-            const timelineContainer = document.getElementById('timeline-container');
-            estados.forEach((etapa, index) => {
-                const clase = index === estados.length - 1 ? 'actual' : 'completo';
-                timelineContainer.innerHTML += `
-                    <div class="timeline-item ${clase}">
-                        <div class="timeline-icon"><i class="fas fa-clock"></i></div>
-                        <div class="timeline-content">
-                            <h4>${etapa.Estado}</h4>
-                            <p class="timeline-date">${new Date(etapa.Fecha).toLocaleString()}</p>
-                        </div>
-                    </div>`;
-            });
-
-            const comentariosLista = document.getElementById('comentarios-lista');
-            comentarios.forEach(c => {
-                comentariosLista.innerHTML += `
-                    <div class="comentario">
-                        <div class="comentario-header">
-                            <span class="usuario"><i class="fas fa-user"></i> ${c.CorreoCiudadano}</span>
-                            <span class="fecha">${new Date(c.FechaComentario).toLocaleString()}</span>
-                        </div>
-                        <p>${c.Comentario}</p>
-                    </div>`;
-            });
-
-        } catch (error) {
-            console.error("Error al cargar los datos del reporte:", error);
-            alert('Hubo un problema al obtener la información del reporte.');
-            window.location.href = 'consultar.html';
+        // 2) Renderizar encabezado e información general
+        document.getElementById('reporte-id').textContent = `Reporte #${id}`;
+        document.querySelector('.reporte-info h3').textContent = reporte.Titulo || 'Sin título';
+        document.querySelector('.info-detalle').innerHTML = `
+            <p><strong>Categoría:</strong> ${reporte.Categoria || 'No especificada'}</p>
+            <p><strong>Ubicación:</strong> ${reporte.Direccion || 'No disponible'}</p>
+            <span class="estado-badge">${estados[estados.length - 1]?.Estado || 'Pendiente'}</span>
+        `;
+        const imgTag = document.getElementById('reporte-img');
+        if (reporte.Imagen1 && reporte.Imagen1.startsWith('data:image')) {
+            imgTag.src = reporte.Imagen1;
+        } else {
+            imgTag.style.display = 'none';
         }
-    });
-    </script>
+
+        // 3) Renderizar timeline
+        const timelineContainer = document.getElementById('timeline-container');
+        estados.forEach((etapa, index) => {
+            const clase = index === estados.length - 1 ? 'actual' : 'completo';
+            timelineContainer.innerHTML += `
+                <div class="timeline-item ${clase}">
+                    <div class="timeline-icon"><i class="fas fa-clock"></i></div>
+                    <div class="timeline-content">
+                        <h4>${etapa.Estado}</h4>
+                        <p class="timeline-date">${new Date(etapa.Fecha).toLocaleString()}</p>
+                    </div>
+                </div>`;
+        });
+
+        // 4) Renderizar comentarios existentes
+        const comentariosLista = document.getElementById('comentarios-lista');
+        function renderComentarios(list) {
+            comentariosLista.innerHTML = list.map(c => `
+                <div class="comentario">
+                    <div class="comentario-header">
+                        <span class="usuario"><i class="fas fa-user"></i> ${c.CorreoCiudadano}</span>
+                        <span class="fecha">${new Date(c.FechaComentario).toLocaleString()}</span>
+                    </div>
+                    <p>${c.Comentario}</p>
+                </div>
+            `).join('');
+        }
+        renderComentarios(comentarios);
+
+        // 5) Controlar botón “Añadir Comentario”
+        const btnCom = document.querySelector('.btn-comentario');
+        const correoCiudadano = localStorage.getItem('correoCiudadano');
+        if (!correoCiudadano) {
+            // No es ciudadano → ocultar botón y mensaje
+            btnCom.style.display = 'none';
+            document.querySelector('.comentario-info').style.display = 'none';
+        } else {
+            // Sí es ciudadano → mostrar botón y registrar handler
+            btnCom.addEventListener('click', async () => {
+                const texto = prompt('Escribe tu comentario:');
+                if (!texto) return;
+
+                // Enviar comentario al backend
+                const resp = await fetch('/api/comentarios', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        idReporte: id,
+                        correoCiudadano: correoCiudadano,
+                        comentario: texto
+                    })
+                });
+                if (resp.ok) {
+                    // Añadir en el DOM sin recargar
+                    comentarios.push({
+                        CorreoCiudadano: correoCiudadano,
+                        Comentario: texto,
+                        FechaComentario: new Date().toISOString()
+                    });
+                    renderComentarios(comentarios);
+                } else {
+                    alert('Error al guardar tu comentario.');
+                }
+            });
+        }
+
+    } catch (error) {
+        console.error("Error al cargar los datos del reporte:", error);
+        alert('Hubo un problema al obtener la información del reporte.');
+        window.location.href = 'consultar.html';
+    }
+});
+</script>
+
 </body>
 </html>
 

@@ -86,6 +86,7 @@
                 <div class="table-cell">Urgencia</div>
                 <div class="table-cell">Fecha</div>
                 <div class="table-cell">Ciudadano</div>
+                <div class="table-cell">Detalle</div>
                 <div class="table-cell actions">Estado y Acciones</div>
             </div>
 
@@ -227,8 +228,8 @@ async function cargarReportes() {
             mostrarReportes();
         }
 
-        function mostrarReportes() {
-         const container = document.getElementById('reportes-container');
+function mostrarReportes() {
+  const container = document.getElementById('reportes-container');
 
   if (reportesFiltrados.length === 0) {
     container.innerHTML = `
@@ -244,7 +245,7 @@ async function cargarReportes() {
 
   container.innerHTML = reportesFiltrados.map(reporte => {
     const estadoActual = (reporte.EstadoActual || 'recibido').toLowerCase();
-    const urgencia = (reporte.Urgencia || '').toLowerCase();
+    const urgencia       = (reporte.Urgencia || '').toLowerCase();
 
     return `
       <div class="table-row estado-${estadoActual}">
@@ -258,18 +259,28 @@ async function cargarReportes() {
         </div>
         <div class="table-cell">${formatearFecha(reporte.FechaCreacion)}</div>
         <div class="table-cell">
-          ${
-            reporte.EsAnonimo
-              ? '<em>Anónimo</em>'
-              : reporte.CorreoCiudadano
-          }
+          ${ reporte.EsAnonimo 
+             ? '<em>Anónimo</em>' 
+             : reporte.CorreoCiudadano }
         </div>
+
+        <!-- Nueva columna “Detalle” -->
+        <div class="table-cell">
+          <button
+            class="detalle-btn"
+            onclick="window.location.href='detalle-reporte.html?id=${reporte.IdReporte}'"
+          >
+            Ver Detalle
+          </button>
+        </div>
+
+        <!-- Acciones de estado -->
         <div class="table-cell actions">
           <select class="estado-select" data-reporte-id="${reporte.IdReporte}">
-            <option value="recibido" ${estadoActual === 'recibido' ? 'selected' : ''}>Recibido</option>
-            <option value="proceso" ${estadoActual === 'proceso' ? 'selected' : ''}>En Proceso</option>
-            <option value="verificado" ${estadoActual === 'verificado' ? 'selected' : ''}>Verificado</option>
-            <option value="reparado" ${estadoActual === 'reparado' ? 'selected' : ''}>Reparado</option>
+            <option value="recibido"   ${estadoActual === 'recibido' ? 'selected' : ''}>Recibido</option>
+            <option value="proceso"    ${estadoActual === 'proceso'  ? 'selected' : ''}>En Proceso</option>
+            <option value="verificado" ${estadoActual === 'verificado'? 'selected' : ''}>Verificado</option>
+            <option value="reparado"   ${estadoActual === 'reparado' ? 'selected' : ''}>Reparado</option>
           </select>
           <button class="confirmar-btn" onclick="actualizarEstado(${reporte.IdReporte})">
             Actualizar
@@ -279,6 +290,7 @@ async function cargarReportes() {
     `;
   }).join('');
 }
+
 
 
         async function actualizarEstado(idReporte) {
