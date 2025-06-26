@@ -205,51 +205,58 @@
         }
 
         function mostrarReportes() {
-            const container = document.getElementById('reportes-container');
+         const container = document.getElementById('reportes-container');
 
-            if (reportesFiltrados.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-message">
-                            <i class="fas fa-inbox"></i>
-                            <p>No hay reportes disponibles</p>
-                        </div>
-                    </div>
-                `;
-                return;
-            }
+  if (reportesFiltrados.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-message">
+          <i class="fas fa-inbox"></i>
+          <p>No hay reportes disponibles</p>
+        </div>
+      </div>
+    `;
+    return;
+  }
 
-            container.innerHTML = reportesFiltrados.map(reporte => {
-                const estadoActual = (reporte.EstadoActual || 'recibido').toLowerCase();
-                const urgencia = (reporte.Urgencia || '').toLowerCase();
+  container.innerHTML = reportesFiltrados.map(reporte => {
+    const estadoActual = (reporte.EstadoActual || 'recibido').toLowerCase();
+    const urgencia = (reporte.Urgencia || '').toLowerCase();
 
-                return `
-                    <div class="table-row estado-${estadoActual}">
-                        <div class="table-cell">${reporte.IdReporte}</div>
-                        <div class="table-cell">${reporte.Titulo}</div>
-                        <div class="table-cell">${reporte.Direccion}</div>
-                        <div class="table-cell">
-                            <span class="urgencia-badge urgencia-${urgencia}">
-                                ${reporte.Urgencia}
-                            </span>
-                        </div>
-                        <div class="table-cell">${formatearFecha(reporte.FechaCreacion)}</div>
-                        <div class="table-cell">${reporte.CorreoCiudadano}</div>
-                        <div class="table-cell actions">
-                            <select class="estado-select" data-reporte-id="${reporte.IdReporte}">
-                                <option value="recibido" ${estadoActual === 'recibido' ? 'selected' : ''}>Recibido</option>
-                                <option value="proceso" ${estadoActual === 'proceso' ? 'selected' : ''}>En Proceso</option>
-                                <option value="verificado" ${estadoActual === 'verificado' ? 'selected' : ''}>Verificado</option>
-                                <option value="reparado" ${estadoActual === 'reparado' ? 'selected' : ''}>Reparado</option>
-                            </select>
-                            <button class="confirmar-btn" onclick="actualizarEstado(${reporte.IdReporte})">
-                                Actualizar
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
+    return `
+      <div class="table-row estado-${estadoActual}">
+        <div class="table-cell">${reporte.IdReporte}</div>
+        <div class="table-cell">${reporte.Titulo}</div>
+        <div class="table-cell">${reporte.Direccion}</div>
+        <div class="table-cell">
+          <span class="urgencia-badge urgencia-${urgencia}">
+            ${reporte.Urgencia}
+          </span>
+        </div>
+        <div class="table-cell">${formatearFecha(reporte.FechaCreacion)}</div>
+        <div class="table-cell">
+          ${
+            reporte.EsAnonimo
+              ? '<em>Anónimo</em>'
+              : reporte.CorreoCiudadano
+          }
+        </div>
+        <div class="table-cell actions">
+          <select class="estado-select" data-reporte-id="${reporte.IdReporte}">
+            <option value="recibido" ${estadoActual === 'recibido' ? 'selected' : ''}>Recibido</option>
+            <option value="proceso" ${estadoActual === 'proceso' ? 'selected' : ''}>En Proceso</option>
+            <option value="verificado" ${estadoActual === 'verificado' ? 'selected' : ''}>Verificado</option>
+            <option value="reparado" ${estadoActual === 'reparado' ? 'selected' : ''}>Reparado</option>
+          </select>
+          <button class="confirmar-btn" onclick="actualizarEstado(${reporte.IdReporte})">
+            Actualizar
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
 
         async function actualizarEstado(idReporte) {
             const select = document.querySelector(`select[data-reporte-id="${idReporte}"]`);

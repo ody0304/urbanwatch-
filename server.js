@@ -993,13 +993,9 @@ app.get('/api/reportes-recientes/:correo', async (req, res) => {
 // Endpoint para obtener reportes filtrados por dependencia del empleado
 app.get('/api/reportes-empleado/:dependencia', async (req, res) => {
     const { dependencia } = req.params;
-    
-    console.log(`🔍 Buscando reportes para dependencia: ${dependencia}`);
-    
     try {
         await sql.connect(dbConfig);
-        
-        // Obtener reportes con su último estado
+
         const result = await sql.query`
             SELECT 
                 r.IdReporte,
@@ -1008,7 +1004,9 @@ app.get('/api/reportes-empleado/:dependencia', async (req, res) => {
                 r.Titulo,
                 r.Descripcion,
                 r.Urgencia,
-                r.CorreoCiudadano,
+                -- Si es anónimo, devolvemos NULL en lugar del correo
+                CASE WHEN r.EsAnonimo = 1 THEN NULL ELSE r.CorreoCiudadano END AS CorreoCiudadano,
+                r.EsAnonimo,
                 r.FechaCreacion,
                 er.Estado as EstadoActual,
                 er.Fecha as FechaUltimoEstado
@@ -1024,15 +1022,14 @@ app.get('/api/reportes-empleado/:dependencia', async (req, res) => {
             WHERE r.Categoria = ${dependencia}
             ORDER BY r.FechaCreacion DESC
         `;
-        
-        console.log(`📊 Reportes encontrados para ${dependencia}:`, result.recordset.length);
+
         res.json(result.recordset);
-        
     } catch (err) {
-        console.error('❌ Error al obtener reportes por empleado:', err);
+        console.error(err);
         res.status(500).json({ error: 'Error al obtener reportes' });
     }
 });
+
 
 // Endpoint para actualizar el estado de un reporte
 app.post('/api/actualizar-estado-reporte', async (req, res) => {
