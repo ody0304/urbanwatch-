@@ -70,13 +70,16 @@
                 </div>
                 
                 <div class="anonymous-option">
-                    <input type="checkbox" id="anonymous" name="anonymous">
-                    <label for="anonymous">Hacer este reporte anónimo</label>
-                    <div class="info-tooltip">
-                        <i class="fas fa-info-circle"></i>
-                        <span class="tooltip-text">Su información personal no será visible para el público, pero será almacenada para seguimiento interno.</span>
-                    </div>
-                </div>
+  <input type="checkbox" id="anonymous" name="anonymous" value="1">
+  <label for="anonymous">Hacer este reporte anónimo</label>
+  <div class="info-tooltip">
+    <i class="fas fa-info-circle"></i>
+    <span class="tooltip-text">
+      Si marcas esto, tu correo no se mostrará en el portal de empleados,
+      pero la notificación te seguirá llegando a ti.
+    </span>
+  </div>
+ </div>
                 
                 <div class="navigation-buttons">
                     <a href="imagenes.html" class="nav-button prev-button">
@@ -226,6 +229,13 @@ function cargarImagenesAdjuntas() {
 }
 
 document.getElementById('send-button').addEventListener('click', async function () {
+
+    // 1) Leer el checkbox
+    const esAnonimo = document.getElementById('anonymous').checked;
+
+    // ——— DEBUG: ver en consola si está true/false
+    console.log('🕵️‍♂️ esAnonimo en front:', esAnonimo);
+    
     const datos = {
         categoria: localStorage.getItem('categoriaProblema'),
         direccion: localStorage.getItem('direccionProblema'),
@@ -235,7 +245,8 @@ document.getElementById('send-button').addEventListener('click', async function 
         imagen1: localStorage.getItem('imagen-1') || '',
         imagen2: localStorage.getItem('imagen-2') || '',
         imagen3: localStorage.getItem('imagen-3') || '',
-        correoCiudadano: localStorage.getItem('correoCiudadano') || ''
+        correoCiudadano: localStorage.getItem('correoCiudadano') || '',
+        esAnonimo:    esAnonimo    // ← aquí enviamos true/false
     };
 
     try {

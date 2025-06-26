@@ -780,6 +780,7 @@ crearTablaReportes();
 
 
 app.post('/api/guardar-reporte', async (req, res) => {
+    console.log('📥 Body recibido en /api/guardar-reporte:', req.body);
   const {
     categoria,
     direccion,
