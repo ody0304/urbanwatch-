@@ -945,7 +945,7 @@ app.post('/api/comentarios', async (req, res) => {
     }
 });
 
-// Endpoint para obtener información general de un reporte por ID
+// GET info completa de un reporte (incluye CorreoCiudadano y EsAnonimo)
 app.get('/api/reporte-info/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -966,17 +966,17 @@ app.get('/api/reporte-info/:id', async (req, res) => {
       WHERE r.IdReporte = ${id}
     `;
 
-    if (!result.recordset.length) {
+    if (result.recordset.length === 0) {
       return res.status(404).json({ error: 'Reporte no encontrado' });
     }
 
-    // Si usas JOIN para traer el primer estado, inclúyelo aquí...
     res.json(result.recordset[0]);
   } catch (err) {
     console.error('Error en GET /api/reporte-info:', err);
     res.status(500).json({ error: 'Error al obtener el reporte' });
   }
 });
+
 
 
 // Endpoint para obtener reportes del ciudadano autenticado
