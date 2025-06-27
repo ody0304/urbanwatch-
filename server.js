@@ -28,6 +28,14 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+transporter.verify((err, success) => {
+  if (err) {
+    console.error('❌ Error al verificar SMTP:', err);
+  } else {
+    console.log('✅ SMTP listo para enviar correos');
+  }
+});
+
 // Rutas básicas
 app.get('/api/prueba', async (req, res) => {
   try {
