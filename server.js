@@ -60,42 +60,35 @@ async function crearTablas() {
   try {
     await sql.connect(dbConfig);
 
-    // 1) Tabla Ciudadanos
+    // 1) Crear tabla Ciudadanos si no existe
     await sql.query(`
       IF NOT EXISTS (
-        SELECT * FROM sysobjects WHERE name='Ciudadanos' AND xtype='U'
+        SELECT * FROM sysobjects 
+        WHERE name = 'Ciudadanos' AND xtype = 'U'
       )
       CREATE TABLE Ciudadanos (
-        Id INT PRIMARY KEY IDENTITY(1,1),
+        Id INT            PRIMARY KEY IDENTITY(1,1),
         Nombre NVARCHAR(100),
         Correo NVARCHAR(100) UNIQUE,
         Contrasena NVARCHAR(100),
-        verified BIT NOT NULL DEFAULT 0,
+        verified BIT             NOT NULL DEFAULT 0,
         verificationToken NVARCHAR(128) NULL,
-        tokenExpires DATETIME NULL
+        tokenExpires    DATETIME      NULL
       );
     `);
-    // Si ya existe, asegúrate de tener las columnas (opcional)
-    await sql.query(`
-      IF EXISTS (SELECT * FROM syscolumns 
-                 WHERE id=OBJECT_ID('Ciudadanos') 
-                   AND name='verified')
-      BEGIN
-        -- ya está todo
-      END
-    `);
 
-    // 2) Tabla PasswordResetTokens (la tuya)
+    // 2) Crear tabla PasswordResetTokens si no existe
     await sql.query(`
       IF NOT EXISTS (
-        SELECT * FROM sysobjects WHERE name='PasswordResetTokens' AND xtype='U'
+        SELECT * FROM sysobjects 
+        WHERE name = 'PasswordResetTokens' AND xtype = 'U'
       )
       CREATE TABLE PasswordResetTokens (
-        Id INT PRIMARY KEY IDENTITY(1,1),
+        Id INT            PRIMARY KEY IDENTITY(1,1),
         Correo NVARCHAR(100) NOT NULL,
-        Token NVARCHAR(255) NOT NULL,
+        Token NVARCHAR(255)  NOT NULL,
         FechaCreacion DATETIME DEFAULT GETDATE(),
-        Usado BIT DEFAULT 0,
+        Usado BIT             DEFAULT 0,
         INDEX IX_Token (Token),
         INDEX IX_Correo (Correo)
       );
@@ -106,6 +99,7 @@ async function crearTablas() {
     console.error("Error al crear/verificar tablas:", err);
   }
 }
+
 crearTablas();
 
 // Registro con envío de correo de verificación
