@@ -103,12 +103,14 @@ async function crearTablas() {
 crearTablas();
 
 // Registro con envío de correo de verificación
+// Registro con envío de correo de verificación
 app.post('/api/registro', async (req, res) => {
   const { nombre, email, password } = req.body;
   const token   = crypto.randomBytes(32).toString('hex');
-  const expires = new Date(Date.now() + 1000*60*60*24); // 24h
+  const expires = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24h
 
   try {
+    // 1) Conectar y guardar usuario
     await sql.connect(dbConfig);
     await sql.query`
       INSERT INTO Ciudadanos 
@@ -116,32 +118,53 @@ app.post('/api/registro', async (req, res) => {
       VALUES 
         (${nombre}, ${email}, ${password}, ${token}, ${expires})
     `;
-    // Enviar correo
+
+    // 2) Enviar correo de verificación
     const verifyUrl = `https://tu-dominio.com/verify-email?token=${token}`;
     await transporter.sendMail({
-      from: '"UrbanWatch" <no-reply@tudominio.com>',
-      to: email,
+      from:    '"UrbanWatch" <no-reply@tudominio.com>',
+      to:      email,
       subject: 'Verifica tu correo en UrbanWatch',
       html: `
         <p>Hola ${nombre},</p>
         <p>Estás registrándote en UrbanWatch. Haz clic aquí para verificar tu cuenta:</p>
-        <p><a href="${verifyUrl}"
-              style="display:inline-block;padding:10px 20px;
-                     background:#2C7A7B;color:#fff;text-decoration:none;
-                     border-radius:5px;">Verificar correo</a></p>
+        <p>
+          <a href="${verifyUrl}"
+             style="display:inline-block;padding:10px 20px;
+                    background:#2C7A7B;color:#fff;
+                    text-decoration:none;border-radius:5px;">
+            Verificar correo
+          </a>
+        </p>
         <p>Si no solicitaste esto, ignora este correo.</p>
       `
     });
 
-    res.status(200).json({ success: true, message: 'Revisa tu correo para verificar tu cuenta.' });
+    // 3) Responder éxito
+    return res.status(200).json({
+      success: true,
+      message: 'Revisa tu correo para verificar tu cuenta.'
+    });
+
   } catch (err) {
-    console.error(err);
-    if (err.number === 2627) {
-      return res.status(400).json({ success:false, message: 'El correo ya está registrado' });
-    }
-    res.status(500).json({ success:false, message: 'Error en el registro' });
+    // Log completo para diagnóstico
+    console.error('Error en /api/registro:', err);
+
+    // ¿Es error de duplicado de correo?
+    const isDuplicate = err.number === 2627;
+
+    // Responder al cliente con el mensaje de error real
+    return res
+      .status(isDuplicate ? 400 : 500)
+      .json({
+        success: false,
+        message: isDuplicate
+          ? 'El correo ya está registrado.'
+          : `Error al crear usuario: ${err.message}`
+      });
   }
 });
+
 
 // Verificación de correo
 app.get('/verify-email', async (req, res) => {
