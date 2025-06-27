@@ -77,6 +77,39 @@ async function crearTablas() {
       );
     `);
 
+    // 1a) Añadir columna verified si falta
+    await sql.query(`
+      IF NOT EXISTS (
+        SELECT * FROM sys.columns
+        WHERE object_id = OBJECT_ID('dbo.Ciudadanos')
+          AND name = 'verified'
+      )
+      ALTER TABLE dbo.Ciudadanos
+      ADD verified BIT NOT NULL DEFAULT 0;
+    `);
+
+    // 1b) Añadir columna verificationToken si falta
+    await sql.query(`
+      IF NOT EXISTS (
+        SELECT * FROM sys.columns
+        WHERE object_id = OBJECT_ID('dbo.Ciudadanos')
+          AND name = 'verificationToken'
+      )
+      ALTER TABLE dbo.Ciudadanos
+      ADD verificationToken NVARCHAR(128) NULL;
+    `);
+
+    // 1c) Añadir columna tokenExpires si falta
+    await sql.query(`
+      IF NOT EXISTS (
+        SELECT * FROM sys.columns
+        WHERE object_id = OBJECT_ID('dbo.Ciudadanos')
+          AND name = 'tokenExpires'
+      )
+      ALTER TABLE dbo.Ciudadanos
+      ADD tokenExpires DATETIME NULL;
+    `);
+
     // 2) Crear tabla PasswordResetTokens si no existe
     await sql.query(`
       IF NOT EXISTS (
@@ -101,6 +134,7 @@ async function crearTablas() {
 }
 
 crearTablas();
+
 
 // Registro con envío de correo de verificación
 // Registro con envío de correo de verificación
