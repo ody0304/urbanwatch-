@@ -1,300 +1,228 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URBANWATCH - Confirmar Reporte</title>
-    <link rel="stylesheet" href="confirmar-style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>URBANWATCH - Confirmar Reporte</title>
+  <link rel="stylesheet" href="confirmar-style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <header>
-        <div class="logo">
-            <div class="logo-circle"></div>
-            <div class="logo-text">URBANWATCH</div>
-        </div>
-    </header>
-
-    <div class="title-bar">
-        <h1>Reportar un Problema</h1>
+  <header>
+    <div class="logo">
+      <div class="logo-circle"></div>
+      <div class="logo-text">URBANWATCH</div>
     </div>
+  </header>
 
-    <main>
-        <div class="report-container">
-            <div class="report-id-section">
-                <p class="confirmation-note">Una vez enviado, recibirá su número de reporte por correo electrónico</p>
-            </div>
-
-            
-            <div class="report-summary">
-                <h2>Resumen del Reporte</h2>
-                <p class="subtitle">Verifique la información antes de enviar</p>
-                
-                <div class="summary-grid">
-                    <div class="summary-item">
-                        <h3>Categoría</h3>
-                        <div class="summary-content category-content">
-                            <div class="category-icon" id="category-icon"></div>
-                            <span id="category-text">Cargando...</span>
-                        </div>
-                    </div>
-                    
-                    <div class="summary-item">
-                        <h3>Detalles</h3>
-                        <div class="summary-content details-content">
-                            <div class="detail-title" id="detail-title">Cargando...</div>
-                            <div class="detail-description" id="detail-description">Cargando...</div>
-                            <div class="detail-urgency">
-                                <span>Urgencia: </span>
-                                <span id="urgency-level">Cargando...</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="summary-item">
-                        <h3>Ubicación</h3>
-                        <div class="summary-content location-content">
-                            <div class="location-icon">
-                                <i class="fas fa-map-marker-alt"></i>
-                            </div>
-                            <div class="location-address" id="location-address">Cargando...</div>
-                        </div>
-                    </div>
-                    
-                    <div class="summary-item">
-                        <h3>Imágenes adjuntas</h3>
-                        <div class="summary-content images-content" id="images-content">
-                            <div class="no-images">No hay imágenes adjuntas</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="anonymous-option">
-  <input type="checkbox" id="anonymous" name="anonymous" value="1">
-  <label for="anonymous">Hacer este reporte anónimo</label>
-  <div class="info-tooltip">
-    <i class="fas fa-info-circle"></i>
-    <span class="tooltip-text">
-      Si marcas esto, tu correo no se mostrará en el portal de empleados,
-      pero la notificación te seguirá llegando a ti.
-    </span>
+  <div class="title-bar">
+    <h1>Reportar un Problema</h1>
   </div>
- </div>
-                
-                <div class="navigation-buttons">
-                    <a href="imagenes.html" class="nav-button prev-button">
-                        <i class="fas fa-arrow-left"></i> Anterior
-                    </a>
-                    <button id="send-button" class="nav-button send-button">
-                        Enviar <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        <div class="progress-sidebar">
-            <div class="progress-steps">
-                <div class="step completed">
-                    <div class="step-number">
-                        <span class="checkmark">✓</span>
-                    </div>
-                    <div class="step-label">Categoría</div>
-                </div>
-                
-                <div class="step completed">
-                    <div class="step-number">
-                        <span class="checkmark">✓</span>
-                    </div>
-                    <div class="step-label">Ubicación</div>
-                </div>
-                
-                <div class="step completed">
-                    <div class="step-number">
-                        <span class="checkmark">✓</span>
-                    </div>
-                    <div class="step-label">Detalles</div>
-                </div>
-                
-                <div class="step completed">
-                    <div class="step-number">
-                        <span class="checkmark">✓</span>
-                    </div>
-                    <div class="step-label">Imágenes</div>
-                </div>
-                
-                <div class="step active">
-                    <div class="step-number">5</div>
-                    <div class="step-label">Confirmar</div>
-                </div>
-            </div>
-        </div>
-    </main>
 
-    <!-- Modal de confirmación -->
-    <div class="confirmation-modal" id="confirmation-modal">
-        <div class="modal-content">
-            <div class="success-icon">
-                <i class="fas fa-check-circle"></i>
+  <main>
+    <div class="report-container">
+      <div class="report-id-section">
+        <p class="confirmation-note">
+          Una vez enviado, recibirá su número de reporte por correo electrónico
+        </p>
+      </div>
+
+      <div class="report-summary">
+        <h2>Resumen del Reporte</h2>
+        <p class="subtitle">Verifique la información antes de enviar</p>
+
+        <div class="summary-grid">
+          <!-- Categoría -->
+          <div class="summary-item">
+            <h3>Categoría</h3>
+            <div class="summary-content category-content">
+              <div class="category-icon" id="category-icon"></div>
+              <span id="category-text">Cargando...</span>
             </div>
-            <h2>¡Reporte Enviado!</h2>
-            <p>Su reporte ha sido enviado exitosamente.</p>
-            <p>ID de Seguimiento: <span class="final-report-id">0000</span></p>
-            <p>Se ha enviado una confirmación a su correo electrónico.</p>
-            <button class="modal-close-button" id="close-modal">Cerrar</button>
+          </div>
+          <!-- Detalles -->
+          <div class="summary-item">
+            <h3>Detalles</h3>
+            <div class="summary-content details-content">
+              <div class="detail-title" id="detail-title">Cargando...</div>
+              <div class="detail-description" id="detail-description">Cargando...</div>
+              <div class="detail-urgency">
+                <span>Urgencia: </span>
+                <span id="urgency-level">Cargando...</span>
+              </div>
+            </div>
+          </div>
+          <!-- Ubicación -->
+          <div class="summary-item">
+            <h3>Ubicación</h3>
+            <div class="summary-content location-content">
+              <div class="location-icon">
+                <i class="fas fa-map-marker-alt"></i>
+              </div>
+              <div class="location-address" id="location-address">Cargando...</div>
+            </div>
+          </div>
+          <!-- Imágenes -->
+          <div class="summary-item">
+            <h3>Imágenes adjuntas</h3>
+            <div class="summary-content images-content" id="images-content">
+              <div class="no-images">No hay imágenes adjuntas</div>
+            </div>
+          </div>
         </div>
+
+        <!-- Opción anónimo -->
+        <div class="anonymous-option">
+          <input type="checkbox" id="anonymous" name="anonymous">
+          <label for="anonymous">Hacer este reporte anónimo</label>
+          <div class="info-tooltip">
+            <i class="fas fa-info-circle"></i>
+            <span class="tooltip-text">
+              Si marcas esto, tu correo no se mostrará en el portal de empleados,
+              pero la notificación te seguirá llegando a ti.
+            </span>
+          </div>
+        </div>
+
+        <div class="navigation-buttons">
+          <a href="imagenes.html" class="nav-button prev-button">
+            <i class="fas fa-arrow-left"></i> Anterior
+          </a>
+          <button id="send-button" class="nav-button send-button">
+            Enviar <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
     </div>
 
-    <script>
-document.addEventListener('DOMContentLoaded', function () {
-    // Mostrar datos cargados
+    <div class="progress-sidebar">
+      <div class="progress-steps">
+        <div class="step completed"><div class="step-number"><span class="checkmark">✓</span></div><div class="step-label">Categoría</div></div>
+        <div class="step completed"><div class="step-number"><span class="checkmark">✓</span></div><div class="step-label">Ubicación</div></div>
+        <div class="step completed"><div class="step-number"><span class="checkmark">✓</span></div><div class="step-label">Detalles</div></div>
+        <div class="step completed"><div class="step-number"><span class="checkmark">✓</span></div><div class="step-label">Imágenes</div></div>
+        <div class="step active"><div class="step-number">5</div><div class="step-label">Confirmar</div></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal de confirmación -->
+  <div class="confirmation-modal" id="confirmation-modal">
+    <div class="modal-content">
+      <div class="success-icon"><i class="fas fa-check-circle"></i></div>
+      <h2>¡Reporte Enviado!</h2>
+      <p>Su reporte ha sido enviado exitosamente.</p>
+      <p>ID de Seguimiento: <span class="final-report-id">0000</span></p>
+      <p>Se ha enviado una confirmación a su correo electrónico.</p>
+      <button class="modal-close-button" id="close-modal">Cerrar</button>
+    </div>
+  </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Cargar datos de LocalStorage
     const categoria = localStorage.getItem('categoriaProblema');
     const direccion = localStorage.getItem('direccionProblema');
-    const titulo = localStorage.getItem('tituloProblem');
+    const titulo    = localStorage.getItem('tituloProblem');
     const descripcion = localStorage.getItem('descripcionProblema');
-    const urgencia = localStorage.getItem('nivelUrgencia');
-    const correo = localStorage.getItem('correoCiudadano');
+    const urgencia  = localStorage.getItem('nivelUrgencia');
 
     if (categoria) {
-        document.getElementById('category-text').textContent = getCategoryName(categoria);
-        document.getElementById('category-icon').className = 'category-icon ' + categoria;
+      document.getElementById('category-text').textContent = getCategoryName(categoria);
+      document.getElementById('category-icon').className = 'category-icon ' + categoria;
     }
-
-    if (direccion) document.getElementById('location-address').textContent = direccion;
-    if (titulo) document.getElementById('detail-title').textContent = titulo;
-    if (descripcion) document.getElementById('detail-description').textContent = descripcion;
+    if (direccion)    document.getElementById('location-address').textContent = direccion;
+    if (titulo)       document.getElementById('detail-title').textContent = titulo;
+    if (descripcion)  document.getElementById('detail-description').textContent = descripcion;
     if (urgencia) {
-        document.getElementById('urgency-level').textContent = getUrgencyText(urgencia);
-        document.getElementById('urgency-level').className = urgencia;
+      document.getElementById('urgency-level').textContent = getUrgencyText(urgencia);
+      document.getElementById('urgency-level').className = urgencia;
     }
-
     cargarImagenesAdjuntas();
 
-    const reportId = generateReportId();
-    localStorage.setItem('reporteId', reportId);
-    document.querySelector('.report-id').textContent = reportId;
-    document.querySelector('.final-report-id').textContent = reportId;
-});
+    // Generar ID temporal
+    const tempId = 'RP-' + Math.floor(10000 + Math.random()*90000);
+    document.querySelector('.report-id')?.textContent = tempId;
+    document.querySelector('.final-report-id').textContent = tempId;
+  });
 
-function getCategoryName(code) {
-    const categories = {
-        'baches': 'Baches y calles dañadas',
-        'alumbrado': 'Alumbrado Público',
-        'basura': 'Basura y limpieza',
-        'agua': 'Agua'
-    };
-    return categories[code] || 'No especificada';
-}
-
-function getUrgencyText(level) {
-    const urgencies = {
-        'bajo': 'Bajo',
-        'medio': 'Medio',
-        'alto': 'Alto',
-        'critico': 'Crítico'
-    };
-    return urgencies[level] || 'No especificado';
-}
-
-function generateReportId() {
-    return 'RP-' + Math.floor(10000 + Math.random() * 90000);
-}
-
-function cargarImagenesAdjuntas() {
-    const imagesContent = document.getElementById('images-content');
-    let hasImages = false;
-
-    for (let i = 1; i <= 3; i++) {
-        if (localStorage.getItem(`imagen-${i}`)) {
-            hasImages = true;
-            break;
+  function getCategoryName(code) {
+    const map = { baches:'Baches y calles dañadas', alumbrado:'Alumbrado Público', basura:'Basura y limpieza', agua:'Agua' };
+    return map[code]||'No especificada';
+  }
+  function getUrgencyText(level) {
+    const map = { bajo:'Bajo', medio:'Medio', alto:'Alto', critico:'Crítico' };
+    return map[level]||'No especificado';
+  }
+  function cargarImagenesAdjuntas() {
+    const cont = document.getElementById('images-content');
+    let any=false; for(let i=1;i<=3;i++) if(localStorage.getItem(`imagen-${i}`)){ any=true; break; }
+    if(any){
+      cont.innerHTML=''; const gal=document.createElement('div'); gal.className='image-gallery';
+      for(let i=1;i<=3;i++){
+        const b=localStorage.getItem(`imagen-${i}`);
+        if(b){ const div=document.createElement('div'); div.className='image-thumbnail';
+          div.innerHTML=`<img src="${b}" alt="Imagen ${i}">`; gal.appendChild(div);
         }
+      }
+      cont.appendChild(gal);
     }
+  }
 
-    if (hasImages) {
-        imagesContent.innerHTML = '';
-        const imageGallery = document.createElement('div');
-        imageGallery.className = 'image-gallery';
-
-        for (let i = 1; i <= 3; i++) {
-            const base64 = localStorage.getItem(`imagen-${i}`);
-            if (base64) {
-                const thumbnail = document.createElement('div');
-                thumbnail.className = 'image-thumbnail';
-                thumbnail.innerHTML = `<img src="${base64}" alt="Imagen adjunta ${i}">`;
-                imageGallery.appendChild(thumbnail);
-            }
-        }
-        imagesContent.appendChild(imageGallery);
-    }
-}
-
-document.getElementById('send-button').addEventListener('click', async function () {
-
-    // 1) Leer el checkbox
+  document.getElementById('send-button').addEventListener('click', async () => {
     const esAnonimo = document.getElementById('anonymous').checked;
-
-    // ——— DEBUG: ver en consola si está true/false
     console.log('🕵️‍♂️ esAnonimo en front:', esAnonimo);
-    
+
     const datos = {
-        categoria: localStorage.getItem('categoriaProblema'),
-        direccion: localStorage.getItem('direccionProblema'),
-        titulo: localStorage.getItem('tituloProblem'),
-        descripcion: localStorage.getItem('descripcionProblema'),
-        urgencia: localStorage.getItem('nivelUrgencia'),
-        imagen1: localStorage.getItem('imagen-1') || '',
-        imagen2: localStorage.getItem('imagen-2') || '',
-        imagen3: localStorage.getItem('imagen-3') || '',
-        correoCiudadano: localStorage.getItem('correoCiudadano') || '',
-        esAnonimo:    esAnonimo    // ← aquí enviamos true/false
+      categoria: localStorage.getItem('categoriaProblema'),
+      direccion: localStorage.getItem('direccionProblema'),
+      titulo: localStorage.getItem('tituloProblem'),
+      descripcion: localStorage.getItem('descripcionProblema'),
+      urgencia: localStorage.getItem('nivelUrgencia'),
+      imagen1: localStorage.getItem('imagen-1')||'',
+      imagen2: localStorage.getItem('imagen-2')||'',
+      imagen3: localStorage.getItem('imagen-3')||'',
+      correoCiudadano: localStorage.getItem('correoCiudadano')||'',
+      esAnonimo
     };
 
     try {
-        const response = await fetch('/api/guardar-reporte', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(datos)
-        });
+      const response = await fetch('/api/guardar-reporte', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify(datos)
+      });
 
-        const resultado = await response.json();
+      let resultado;
+      try {
+        resultado = await response.json();
+      } catch {
+        resultado = { message: await response.text() };
+      }
 
-        if (response.ok && resultado.success) {
-            // ✅ Guardar el ID generado por la base de datos
-            localStorage.setItem('idReporteReal', resultado.idReporte);
-
-            // ✅ Mostrar el ID en el modal
-            document.querySelector('.final-report-id').textContent = resultado.idReporte;
-
-            // ✅ Mostrar el modal de confirmación
-            document.getElementById('confirmation-modal').classList.add('active');
-
-            // ✅ Esperar y redirigir
-            setTimeout(() => {
-                // Limpiar datos del reporte (NO el correo)
-                localStorage.removeItem('categoriaProblema');
-                localStorage.removeItem('direccionProblema');
-                localStorage.removeItem('tituloProblem');
-                localStorage.removeItem('descripcionProblema');
-                localStorage.removeItem('nivelUrgencia');
-                localStorage.removeItem('imagen-1');
-                localStorage.removeItem('imagen-2');
-                localStorage.removeItem('imagen-3');
-                localStorage.removeItem('reporteId');
-
-                window.location.href = 'ciudadanos-portal.html';
-            }, 3000);
-        } else {
-            alert('Error al enviar reporte: ' + (resultado.message || 'Inténtalo más tarde.'));
-        }
+      if (response.ok && resultado.success) {
+        localStorage.setItem('idReporteReal', resultado.idReporte);
+        document.querySelector('.final-report-id').textContent = resultado.idReporte;
+        document.getElementById('confirmation-modal').classList.add('active');
+        setTimeout(() => {
+          // limpiar datos (sin correo)
+          ['categoriaProblema','direccionProblema','tituloProblem','descripcionProblema','nivelUrgencia','imagen-1','imagen-2','imagen-3','reporteId']
+          .forEach(k => localStorage.removeItem(k));
+          window.location.href = 'ciudadanos-portal.html';
+        }, 3000);
+      } else {
+        alert('Error al enviar reporte: ' + (resultado.message || 'Inténtalo más tarde.'));
+        console.error('Detalle del error:', resultado);
+      }
     } catch (error) {
-        console.error(error);
-        alert('Error de conexión al enviar el reporte');
+      console.error('Error de conexión al enviar el reporte:', error);
+      alert('Error de conexión al enviar el reporte');
     }
-});
+  });
 
-document.getElementById('close-modal').addEventListener('click', function () {
+  document.getElementById('close-modal').addEventListener('click', () => {
     document.getElementById('confirmation-modal').classList.remove('active');
-});
-</script>
+  });
+  </script>
 </body>
 </html>

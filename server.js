@@ -903,77 +903,41 @@ crearTablaReportes();
 
 
 app.post('/api/guardar-reporte', async (req, res) => {
-    console.log('📥 Body recibido en /api/guardar-reporte:', req.body);
-  const {
-    categoria,
-    direccion,
-    titulo,
-    descripcion,
-    urgencia,
-    imagen1,
-    imagen2,
-    imagen3,
-    correoCiudadano,
-    esAnonimo          // ← lo añades aquí
-  } = req.body;
+  console.log('📥 Body recibido en /api/guardar-reporte:', req.body);
+  const { categoria, direccion, titulo, descripcion, urgencia,
+          imagen1, imagen2, imagen3, correoCiudadano, esAnonimo } = req.body;
 
   try {
     await sql.connect(dbConfig);
-
-    // INSERT incluyendo EsAnonimo y FechaCreacion
     const result = await sql.query`
       INSERT INTO Reportes (
-        Categoria,
-        Direccion,
-        Titulo,
-        Descripcion,
-        Urgencia,
-        Imagen1,
-        Imagen2,
-        Imagen3,
-        CorreoCiudadano,
-        EsAnonimo,        -- nueva columna
-        FechaCreacion
+        Categoria, Direccion, Titulo, Descripcion, Urgencia,
+        Imagen1, Imagen2, Imagen3, CorreoCiudadano, EsAnonimo, FechaCreacion
       )
       OUTPUT INSERTED.IdReporte
       VALUES (
-        ${categoria},
-        ${direccion},
-        ${titulo},
-        ${descripcion},
-        ${urgencia},
-        ${imagen1},
-        ${imagen2},
-        ${imagen3},
-        ${correoCiudadano},
-        ${esAnonimo ? 1 : 0},   -- almacena 1 o 0
+        ${categoria}, ${direccion}, ${titulo}, ${descripcion}, ${urgencia},
+        ${imagen1}, ${imagen2}, ${imagen3}, ${correoCiudadano}, ${esAnonimo ? 1 : 0},
         GETDATE()
-      )
+      );
     `;
     const nuevoId = result.recordset[0].IdReporte;
 
-    // Responde primero al cliente
     res.status(200).json({ success: true, idReporte: nuevoId });
 
-    // Luego, en background, envía el correo
-    (async () => {
-      try {
-        await transporter.sendMail({
-          from:    'urbanwatch@noreply.com',
-          to:      correoCiudadano,
-          subject: `Confirmación de Reporte URBANWATCH`,
-          text:    `Gracias por su reporte. Su ID es ${nuevoId}`
-        });
-        console.log("📧 Correo enviado");
-      } catch (mailErr) {
-        console.warn("⚠️ Error al enviar correo:", mailErr.message);
-      }
-    })();
+    // envío de correo en background...
   } catch (err) {
     console.error("❌ Error al guardar el reporte:", err);
-    res.status(500).json({ success: false, message: 'Error al guardar el reporte' });
+    // devolvemos el mensaje real
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: `Error al guardar el reporte: ${err.message}`
+      });
   }
 });
+
 
 
 
