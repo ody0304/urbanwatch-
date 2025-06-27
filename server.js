@@ -55,87 +55,159 @@ app.listen(PORT, () => {
 });
 
 
-
-
+// Función para crear/ajustar tablas
 async function crearTablas() {
-    try {
-        await sql.connect(dbConfig);
-        
-        // Crear tabla de ciudadanos
-        await sql.query(`
-            IF NOT EXISTS (
-                SELECT * FROM sysobjects WHERE name='Ciudadanos' AND xtype='U'
-            )
-            CREATE TABLE Ciudadanos (
-                Id INT PRIMARY KEY IDENTITY(1,1),
-                Nombre NVARCHAR(100),
-                Correo NVARCHAR(100) UNIQUE,
-                Contrasena NVARCHAR(100)
-            )
-        `);
+  try {
+    await sql.connect(dbConfig);
 
-        // Crear tabla para tokens de recuperación
-        await sql.query(`
-            IF NOT EXISTS (
-                SELECT * FROM sysobjects WHERE name='PasswordResetTokens' AND xtype='U'
-            )
-            CREATE TABLE PasswordResetTokens (
-                Id INT PRIMARY KEY IDENTITY(1,1),
-                Correo NVARCHAR(100) NOT NULL,
-                Token NVARCHAR(255) NOT NULL,
-                FechaCreacion DATETIME DEFAULT GETDATE(),
-                Usado BIT DEFAULT 0,
-                INDEX IX_Token (Token),
-                INDEX IX_Correo (Correo)
-            )
-        `);
+    // 1) Tabla Ciudadanos
+    await sql.query(`
+      IF NOT EXISTS (
+        SELECT * FROM sysobjects WHERE name='Ciudadanos' AND xtype='U'
+      )
+      CREATE TABLE Ciudadanos (
+        Id INT PRIMARY KEY IDENTITY(1,1),
+        Nombre NVARCHAR(100),
+        Correo NVARCHAR(100) UNIQUE,
+        Contrasena NVARCHAR(100),
+        verified BIT NOT NULL DEFAULT 0,
+        verificationToken NVARCHAR(128) NULL,
+        tokenExpires DATETIME NULL
+      );
+    `);
+    // Si ya existe, asegúrate de tener las columnas (opcional)
+    await sql.query(`
+      IF EXISTS (SELECT * FROM syscolumns 
+                 WHERE id=OBJECT_ID('Ciudadanos') 
+                   AND name='verified')
+      BEGIN
+        -- ya está todo
+      END
+    `);
 
-        console.log("Tablas verificadas/creadas correctamente.");
-    } catch (err) {
-        console.error("Error al crear/verificar tablas:", err);
-    }
+    // 2) Tabla PasswordResetTokens (la tuya)
+    await sql.query(`
+      IF NOT EXISTS (
+        SELECT * FROM sysobjects WHERE name='PasswordResetTokens' AND xtype='U'
+      )
+      CREATE TABLE PasswordResetTokens (
+        Id INT PRIMARY KEY IDENTITY(1,1),
+        Correo NVARCHAR(100) NOT NULL,
+        Token NVARCHAR(255) NOT NULL,
+        FechaCreacion DATETIME DEFAULT GETDATE(),
+        Usado BIT DEFAULT 0,
+        INDEX IX_Token (Token),
+        INDEX IX_Correo (Correo)
+      );
+    `);
+
+    console.log("Tablas creadas o verificadas correctamente.");
+  } catch (err) {
+    console.error("Error al crear/verificar tablas:", err);
+  }
 }
 crearTablas();
 
-// Registro
+// Registro con envío de correo de verificación
 app.post('/api/registro', async (req, res) => {
-    const { nombre, email, password } = req.body;
-    try {
-        await sql.connect(dbConfig);
-        await sql.query`
-            INSERT INTO Ciudadanos (Nombre, Correo, Contrasena)
-            VALUES (${nombre}, ${email}, ${password})
-        `;
-        res.status(200).send('Registro exitoso');
-    } catch (err) {
-        console.error(err);
-        if (err.number === 2627) { // Error de duplicado
-            res.status(400).json({ message: 'El correo electrónico ya está registrado' });
-        } else {
-            res.status(500).send('Error en el registro');
-        }
+  const { nombre, email, password } = req.body;
+  const token   = crypto.randomBytes(32).toString('hex');
+  const expires = new Date(Date.now() + 1000*60*60*24); // 24h
+
+  try {
+    await sql.connect(dbConfig);
+    await sql.query`
+      INSERT INTO Ciudadanos 
+        (Nombre, Correo, Contrasena, verificationToken, tokenExpires)
+      VALUES 
+        (${nombre}, ${email}, ${password}, ${token}, ${expires})
+    `;
+    // Enviar correo
+    const verifyUrl = `https://tu-dominio.com/verify-email?token=${token}`;
+    await transporter.sendMail({
+      from: '"UrbanWatch" <no-reply@tudominio.com>',
+      to: email,
+      subject: 'Verifica tu correo en UrbanWatch',
+      html: `
+        <p>Hola ${nombre},</p>
+        <p>Estás registrándote en UrbanWatch. Haz clic aquí para verificar tu cuenta:</p>
+        <p><a href="${verifyUrl}"
+              style="display:inline-block;padding:10px 20px;
+                     background:#2C7A7B;color:#fff;text-decoration:none;
+                     border-radius:5px;">Verificar correo</a></p>
+        <p>Si no solicitaste esto, ignora este correo.</p>
+      `
+    });
+
+    res.status(200).json({ success: true, message: 'Revisa tu correo para verificar tu cuenta.' });
+  } catch (err) {
+    console.error(err);
+    if (err.number === 2627) {
+      return res.status(400).json({ success:false, message: 'El correo ya está registrado' });
     }
+    res.status(500).json({ success:false, message: 'Error en el registro' });
+  }
 });
 
-// Inicio de sesión
-app.post('/api/login', async (req, res) => {
-    const { email, password } = req.body;
-    try {
-        await sql.connect(dbConfig);
-        const result = await sql.query`
-            SELECT * FROM Ciudadanos
-            WHERE Correo = ${email} AND Contrasena = ${password}
-        `;
-        if (result.recordset.length > 0) {
-            res.status(200).json({ success: true });
-        } else {
-            res.status(401).json({ success: false, message: 'Credenciales inválidas' });
-        }
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Error al iniciar sesión');
+// Verificación de correo
+app.get('/verify-email', async (req, res) => {
+  const token = req.query.token;
+  if (!token) return res.status(400).send('Token faltante.');
+
+  try {
+    await sql.connect(dbConfig);
+    const result = await sql.query`
+      SELECT * FROM Ciudadanos
+      WHERE verificationToken = ${token}
+        AND tokenExpires > GETDATE()
+        AND verified = 0
+    `;
+    if (result.recordset.length === 0) {
+      return res.send('<h2>Enlace inválido o expirado.</h2>');
     }
+
+    // Marcar verificado
+    await sql.query`
+      UPDATE Ciudadanos
+      SET verified = 1,
+          verificationToken = NULL,
+          tokenExpires = NULL
+      WHERE verificationToken = ${token}
+    `;
+
+    // Redirige al login con parámetro
+    return res.redirect('/login-ciudadano.html?verified=true');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error interno.');
+  }
 });
+
+// Login (rechaza no verificados)
+app.post('/api/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    await sql.connect(dbConfig);
+    const result = await sql.query`
+      SELECT * FROM Ciudadanos
+      WHERE Correo = ${email} AND Contrasena = ${password}
+    `;
+    if (result.recordset.length === 0) {
+      return res.status(401).json({ success:false, message: 'Credenciales inválidas' });
+    }
+    const user = result.recordset[0];
+    if (!user.verified) {
+      return res.status(401).json({ success:false, message: 'Confirma tu correo antes de iniciar sesión.' });
+    }
+    // TODO: genera sesión o JWT
+    res.json({ success:true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success:false, message: 'Error al iniciar sesión' });
+  }
+});
+
+app.listen(3000, () => console.log('Servidor en http://localhost:3000'));
 
 // Recuperación de contraseña - Enviar enlace
 app.post('/api/recover-password', async (req, res) => {
