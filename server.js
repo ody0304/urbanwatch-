@@ -1,70 +1,59 @@
-const express = require('express');
-const sql = require('mssql');
-const cors = require('cors');
-const crypto = require('crypto');
+require('dotenv').config();
+const express    = require('express');
+const sql        = require('mssql');
+const cors       = require('cors');
+const crypto     = require('crypto');
 const nodemailer = require('nodemailer');
-const dbConfig = require('./dbconfig');
+const path       = require('path');
+const dbConfig   = require('./dbconfig');
 
-const app = express();
+const app  = express();
 const PORT = process.env.PORT || 3000;
+const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
 console.log("Driver activo:", dbConfig.driver || 'default (tedious)');
+console.log("Conectando con config:", dbConfig);
 
+// Middlewares
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 
-require('dotenv').config();
-console.log("Conectando con config:");
-console.log(dbConfig);
-
-// Configuración de correo electrónico
+// Transportador de correo
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS?.replace(/\s/g, '') || 'czhh gxlh tfjg nvtd'.replace(/\s/g, '')
-    }
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS?.trim()
+  }
 });
 
-// Ruta ejemplo para conexión a la base de datos
+// Rutas básicas
 app.get('/api/prueba', async (req, res) => {
-    try {
-        await sql.connect(dbConfig);
-        const result = await sql.query('SELECT TOP 5 * FROM Ciudadanos');
-        res.json(result.recordset);
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Error al conectar con la base de datos');
-    }
+  try {
+    await sql.connect(dbConfig);
+    const result = await sql.query('SELECT TOP 5 * FROM Ciudadanos');
+    res.json(result.recordset);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al conectar con la base de datos');
+  }
 });
-
-// Ruta de comprobación de salud
-app.get('/saludz', (req, res) => {
-  res.status(200).send('OK');
+app.get('/saludz', (_req, res) => res.send('OK'));
+app.get('/', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'inicio.html'));
 });
-
-const path = require('path');
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'inicio.html'));
-});
-
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
-});
-
 
 // Función para crear/ajustar tablas
 async function crearTablas() {
   try {
     await sql.connect(dbConfig);
 
-    // 1) Crear tabla Ciudadanos si no existe
+    // Crear tabla Ciudadanos si no existe
     await sql.query(`
       IF NOT EXISTS (
         SELECT * FROM sysobjects 
-        WHERE name = 'Ciudadanos' AND xtype = 'U'
+        WHERE name='Ciudadanos' AND xtype='U'
       )
       CREATE TABLE Ciudadanos (
         Id INT            PRIMARY KEY IDENTITY(1,1),
@@ -77,44 +66,40 @@ async function crearTablas() {
       );
     `);
 
-    // 1a) Añadir columna verified si falta
+    // Añadir columnas si faltan
     await sql.query(`
       IF NOT EXISTS (
         SELECT * FROM sys.columns
-        WHERE object_id = OBJECT_ID('dbo.Ciudadanos')
+        WHERE object_id = OBJECT_ID('dbo.Ciudadanos') 
           AND name = 'verified'
       )
       ALTER TABLE dbo.Ciudadanos
       ADD verified BIT NOT NULL DEFAULT 0;
     `);
-
-    // 1b) Añadir columna verificationToken si falta
     await sql.query(`
       IF NOT EXISTS (
         SELECT * FROM sys.columns
-        WHERE object_id = OBJECT_ID('dbo.Ciudadanos')
+        WHERE object_id = OBJECT_ID('dbo.Ciudadanos') 
           AND name = 'verificationToken'
       )
       ALTER TABLE dbo.Ciudadanos
       ADD verificationToken NVARCHAR(128) NULL;
     `);
-
-    // 1c) Añadir columna tokenExpires si falta
     await sql.query(`
       IF NOT EXISTS (
         SELECT * FROM sys.columns
-        WHERE object_id = OBJECT_ID('dbo.Ciudadanos')
+        WHERE object_id = OBJECT_ID('dbo.Ciudadanos') 
           AND name = 'tokenExpires'
       )
       ALTER TABLE dbo.Ciudadanos
       ADD tokenExpires DATETIME NULL;
     `);
 
-    // 2) Crear tabla PasswordResetTokens si no existe
+    // Crear tabla PasswordResetTokens si no existe
     await sql.query(`
       IF NOT EXISTS (
         SELECT * FROM sysobjects 
-        WHERE name = 'PasswordResetTokens' AND xtype = 'U'
+        WHERE name='PasswordResetTokens' AND xtype='U'
       )
       CREATE TABLE PasswordResetTokens (
         Id INT            PRIMARY KEY IDENTITY(1,1),
@@ -132,19 +117,15 @@ async function crearTablas() {
     console.error("Error al crear/verificar tablas:", err);
   }
 }
-
 crearTablas();
 
-
-// Registro con envío de correo de verificación
-// Registro con envío de correo de verificación
+// Registro con verificación por correo
 app.post('/api/registro', async (req, res) => {
   const { nombre, email, password } = req.body;
   const token   = crypto.randomBytes(32).toString('hex');
   const expires = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24h
 
   try {
-    // 1) Conectar y guardar usuario
     await sql.connect(dbConfig);
     await sql.query`
       INSERT INTO Ciudadanos 
@@ -153,15 +134,16 @@ app.post('/api/registro', async (req, res) => {
         (${nombre}, ${email}, ${password}, ${token}, ${expires})
     `;
 
-    // 2) Enviar correo de verificación
-    const verifyUrl = `https://tu-dominio.com/verify-email?token=${token}`;
+    // Construye URL de verificación correctamente
+    const verifyUrl = `${BASE_URL}/verify-email?token=${token}`;
     await transporter.sendMail({
-      from:    '"UrbanWatch" <no-reply@tudominio.com>',
+      from:    '"UrbanWatch" <no-reply@urbanwatch.com>',
       to:      email,
       subject: 'Verifica tu correo en UrbanWatch',
       html: `
         <p>Hola ${nombre},</p>
-        <p>Estás registrándote en UrbanWatch. Haz clic aquí para verificar tu cuenta:</p>
+        <p>Estás registrándote en UrbanWatch. 
+           Haz clic en el siguiente enlace para verificar tu cuenta:</p>
         <p>
           <a href="${verifyUrl}"
              style="display:inline-block;padding:10px 20px;
@@ -174,31 +156,24 @@ app.post('/api/registro', async (req, res) => {
       `
     });
 
-    // 3) Responder éxito
     return res.status(200).json({
       success: true,
       message: 'Revisa tu correo para verificar tu cuenta.'
     });
 
   } catch (err) {
-    // Log completo para diagnóstico
     console.error('Error en /api/registro:', err);
-
-    // ¿Es error de duplicado de correo?
-    const isDuplicate = err.number === 2627;
-
-    // Responder al cliente con el mensaje de error real
+    const isDup = err.number === 2627;
     return res
-      .status(isDuplicate ? 400 : 500)
+      .status(isDup ? 400 : 500)
       .json({
         success: false,
-        message: isDuplicate
+        message: isDup
           ? 'El correo ya está registrado.'
           : `Error al crear usuario: ${err.message}`
       });
   }
 });
-
 
 // Verificación de correo
 app.get('/verify-email', async (req, res) => {
@@ -217,7 +192,6 @@ app.get('/verify-email', async (req, res) => {
       return res.send('<h2>Enlace inválido o expirado.</h2>');
     }
 
-    // Marcar verificado
     await sql.query`
       UPDATE Ciudadanos
       SET verified = 1,
@@ -226,11 +200,10 @@ app.get('/verify-email', async (req, res) => {
       WHERE verificationToken = ${token}
     `;
 
-    // Redirige al login con parámetro
     return res.redirect('/login-ciudadano.html?verified=true');
   } catch (err) {
     console.error(err);
-    res.status(500).send('Error interno.');
+    return res.status(500).send('Error interno.');
   }
 });
 
@@ -244,21 +217,24 @@ app.post('/api/login', async (req, res) => {
       WHERE Correo = ${email} AND Contrasena = ${password}
     `;
     if (result.recordset.length === 0) {
-      return res.status(401).json({ success:false, message: 'Credenciales inválidas' });
+      return res.status(401).json({ success: false, message: 'Credenciales inválidas' });
     }
     const user = result.recordset[0];
     if (!user.verified) {
-      return res.status(401).json({ success:false, message: 'Confirma tu correo antes de iniciar sesión.' });
+      return res.status(401).json({ success: false, message: 'Confirma tu correo antes de iniciar sesión.' });
     }
-    // TODO: genera sesión o JWT
-    res.json({ success:true });
+    return res.json({ success: true });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success:false, message: 'Error al iniciar sesión' });
+    return res.status(500).json({ success: false, message: 'Error al iniciar sesión' });
   }
 });
 
-app.listen(3000, () => console.log('Servidor en http://localhost:3000'));
+// Arranque del servidor
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en ${BASE_URL}`);
+});
+
 
 // Recuperación de contraseña - Enviar enlace
 app.post('/api/recover-password', async (req, res) => {
