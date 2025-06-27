@@ -232,6 +232,7 @@ app.get('/verify-email', async (req, res) => {
 });
 
 // Login (rechaza no verificados)
+// Login SIN comprobar verified
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -243,16 +244,15 @@ app.post('/api/login', async (req, res) => {
     if (result.recordset.length === 0) {
       return res.status(401).json({ success: false, message: 'Credenciales inválidas' });
     }
-    const user = result.recordset[0];
-    if (!user.verified) {
-      return res.status(401).json({ success: false, message: 'Confirma tu correo antes de iniciar sesión.' });
-    }
+
+    // Ya no comprobamos el campo verified, dejamos entrar a cualquiera con credenciales válidas
     return res.json({ success: true });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ success: false, message: 'Error al iniciar sesión' });
   }
 });
+
 
 // Arranque del servidor
 app.listen(PORT, () => {
