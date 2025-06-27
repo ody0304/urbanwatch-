@@ -289,7 +289,7 @@ app.post('/api/recover-password', async (req, res) => {
         `;
         
         // Crear enlace de recuperación
-        const resetLink = `http://localhost:${PORT}/reset-password.html?token=${token}`;
+        const resetLink = `${process.env.BASE_URL}/reset-password.html?token=${token}`;
         
         // Configurar email
         const mailOptions = {
