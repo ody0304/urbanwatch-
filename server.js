@@ -28,6 +28,22 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+app.post('/api/test-email', async (req, res) => {
+  const to = req.body.email;
+  try {
+    await transporter.sendMail({
+      from: `"UrbanWatch" <${process.env.EMAIL_USER}>`,
+      to,
+      subject: 'Prueba de email UrbanWatch',
+      text: '¡Hola! Si ves este correo, tu SMTP funciona correctamente.'
+    });
+    return res.json({ success: true, message: 'Correo de prueba enviado.' });
+  } catch (err) {
+    console.error('❌ Error en /api/test-email:', err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 transporter.verify((err, success) => {
   if (err) {
     console.error('❌ Error al verificar SMTP:', err);
