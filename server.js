@@ -909,34 +909,37 @@ app.post('/api/guardar-reporte', async (req, res) => {
 
   try {
     await sql.connect(dbConfig);
-    const result = await sql.query`
+
+    // 1) Insert sin OUTPUT
+    await sql.query`
       INSERT INTO Reportes (
         Categoria, Direccion, Titulo, Descripcion, Urgencia,
         Imagen1, Imagen2, Imagen3, CorreoCiudadano, EsAnonimo, FechaCreacion
       )
-      OUTPUT INSERTED.IdReporte
       VALUES (
         ${categoria}, ${direccion}, ${titulo}, ${descripcion}, ${urgencia},
         ${imagen1}, ${imagen2}, ${imagen3}, ${correoCiudadano}, ${esAnonimo ? 1 : 0},
         GETDATE()
       );
     `;
-    const nuevoId = result.recordset[0].IdReporte;
 
+    // 2) Obtener el ID generado
+    const identityResult = await sql.query`SELECT SCOPE_IDENTITY() AS IdReporte;`;
+    const nuevoId = identityResult.recordset[0].IdReporte;
+
+    // 3) Responder al cliente
     res.status(200).json({ success: true, idReporte: nuevoId });
 
-    // envío de correo en background...
+    // 4) (Opcional) envío de correo en background …
   } catch (err) {
     console.error("❌ Error al guardar el reporte:", err);
-    // devolvemos el mensaje real
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: `Error al guardar el reporte: ${err.message}`
-      });
+    res.status(500).json({
+      success: false,
+      message: `Error al guardar el reporte: ${err.message}`
+    });
   }
 });
+
 
 
 
