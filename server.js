@@ -11,7 +11,11 @@ const jwt = require('jsonwebtoken');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`API escuchando en puerto ${PORT}`));
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
 
 // Verificación por consola de la configuración
 console.log("📦 Configuración de BD:", dbConfig);
@@ -160,70 +164,50 @@ crearTablas();
 const pwdRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8}$/;
 
 app.post('/api/registro', async (req, res) => {
-  const { nombre, email, password } = req.body;
-
-  // 1) Validar formato de contraseña
-  if (!pwdRegex.test(password)) {
-    return res.status(400).json({
-      success: false,
-      message: 'La contraseña debe tener exactamente 8 caracteres, al menos una mayúscula, un número y un carácter especial.'
-    });
-  }
-
-  // 2) Generar token de verificación
-  const token   = crypto.randomBytes(32).toString('hex');
-  const expires = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 horas
-
   try {
-    // 3) Guardar el usuario en la base de datos
+    const { nombre, email, password } = req.body;
+
+    // 1) Validar formato de contraseña
+    if (!pwdRegex.test(password)) {
+      return res.status(400).json({
+        success: false,
+        message: 'La contraseña debe tener 8 caracteres exactos, al menos una mayúscula, un número y un carácter especial.'
+      });
+    }
+
+    // 2) Generar token y fecha de expiración
+    const token   = crypto.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 1000*60*60*24);
+
+    // 3) Guardar usuario
     await sql.connect(dbConfig);
     await sql.query`
-      INSERT INTO Ciudadanos 
-        (Nombre, Correo, Contrasena, verificationToken, tokenExpires)
-      VALUES 
-        (${nombre}, ${email}, ${password}, ${token}, ${expires})
+      INSERT INTO Ciudadanos (Nombre, Correo, Contrasena, verificationToken, tokenExpires)
+      VALUES (${nombre}, ${email}, ${password}, ${token}, ${expires})
     `;
 
-    // 4) Enviar correo de verificación
+    // 4) Enviar mail
     const verifyUrl = `${BASE_URL}/verify-email?token=${token}`;
-    await transporter.sendMail({
-      from:    '"UrbanWatch" <no-reply@urbanwatch.com>',
-      to:      email,
-      subject: 'Verifica tu correo en UrbanWatch',
-      html: `
-        <p>Hola ${nombre},</p>
-        <p>Gracias por registrarte en UrbanWatch. Haz clic en el siguiente enlace para verificar tu cuenta:</p>
-        <p>
-          <a href="${verifyUrl}"
-             style="display:inline-block;padding:10px 20px;
-                    background:#2C7A7B;color:#fff;
-                    text-decoration:none;border-radius:5px;">
-            Verificar correo
-          </a>
-        </p>
-        <p>Si no solicitaste este registro, ignora este correo.</p>
-      `
-    });
+    await transporter.sendMail({ /* … */ });
 
-    // 5) Responder al cliente
-    return res.status(200).json({
-      success: true,
-      message: 'Revisa tu correo para verificar tu cuenta.'
-    });
+    // 5) Responder
+    return res.json({ success: true, message: 'Revisa tu correo para verificar tu cuenta.' });
 
   } catch (err) {
-    console.error('Error en /api/registro:', err);
-    const isDup = err.number === 2627; // violación de clave única
+    console.error('Error en POST /api/registro:', err);
+    // siempre devolvemos JSON, nunca HTML
+    const isDup = err.number === 2627;
     return res
       .status(isDup ? 400 : 500)
       .json({
         success: false,
         message: isDup
           ? 'El correo ya está registrado.'
-          : `Error al crear usuario: ${err.message}`
+          : 'Error interno del servidor.'
       });
   }
 });
+
 
 
 // Verificación de correo
