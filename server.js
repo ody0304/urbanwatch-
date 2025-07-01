@@ -6,36 +6,37 @@ const sql        = require('mssql');
 const crypto     = require('crypto');
 const cors       = require('cors');
 const nodemailer = require('nodemailer');
-const dbConfig   = require('./dbconfig');    // tu configuración de SQL Server
-const { transporter } = require('./mailer'); // llega tu transporter de nodemailer
-// const { transporter } = require('./config'); // o como lo tengas
+const dbConfig   = require('./dbconfig');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.BASE_URL || `https://urbanwatch.onrender.com`;
 
-// 1) Middlewares
-app.use(express.json({ limit: '10mb' }));
-app.use(cors());  
-app.use(express.static(path.join(__dirname, 'public')));
-
-// 2) Verificar conexión a BD al arrancar
-sql.connect(dbConfig)
-  .then(() => console.log('✅ Conectado a la base de datos'))
-  .catch(err => console.error('❌ Error al conectar a la base de datos:', err));
-
-
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor escuchando en ${BASE_URL}`);
+// 1) Instancia UNA vez el transporter
+const transporter = nodemailer.createTransport({
+  host: process.env.MAIL_HOST,
+  port: Number(process.env.MAIL_PORT),
+  secure: process.env.MAIL_SECURE === 'true',
+  auth: {
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS
+  }
 });
 
-// Transportador de correo
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS?.trim()
-  }
+// 2) Middlewares y static
+app.use(express.json({ limit: '10mb' }));
+app.use(cors());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// 3) Conectar BD
+sql.connect(dbConfig)
+  .then(() => console.log('✅ Conectado a la base de datos'))
+  .catch(err => console.error('❌ Error al conectar a la BD:', err));
+
+// 4) Verificar SMTP
+transporter.verify((err, success) => {
+  if (err) console.error('❌ SMTP error:', err);
+  else     console.log('✅ SMTP listo para enviar correos');
 });
 
 
@@ -55,13 +56,6 @@ app.post('/api/test-email', async (req, res) => {
   }
 });
 
-transporter.verify((err, success) => {
-  if (err) {
-    console.error('❌ Error al verificar SMTP:', err);
-  } else {
-    console.log('✅ SMTP listo para enviar correos');
-  }
-});
 
 // Rutas básicas
 app.get('/api/prueba', async (req, res) => {
