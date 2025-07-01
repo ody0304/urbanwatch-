@@ -1,103 +1,119 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URBANWATCH - Acceso Empleado</title>
-    <link rel="stylesheet" href="login-empleado-style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>URBANWATCH - Acceso Empleado</title>
+  <link rel="stylesheet" href="login-empleado-style.css">
 </head>
 <body>
-    <header>
-        <div class="logo">
-            <div class="logo-circle"></div>
-            <div class="logo-text">URBANWATCH</div>
+  <header>
+    <div class="logo">
+      <div class="logo-circle"></div>
+      <div class="logo-text">URBANWATCH</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="form-container">
+        <div class="panel panel-login">
+          <div class="briefcase-icon-container">
+            <!-- SVG maletín ... -->
+          </div>
+          
+          <div class="form-section">
+            <h1>Acceso Empleado / Supervisor</h1>
+            
+            <form id="login-form">
+              <div class="form-group">
+                <label for="login-email">Correo Electrónico:</label>
+                <input type="email" id="login-email" name="email" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="login-password">Contraseña:</label>
+                <input type="password" id="login-password" name="password" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="login-dependencia">Dependencia (solo supervisores):</label>
+                <select id="login-dependencia" name="dependencia">
+                  <option value="">-- Seleccione (solo supervisores) --</option>
+                  <option value="agua">Agua</option>
+                  <option value="alumbrado">Alumbrado Público</option>
+                  <option value="baches">Baches y Calles</option>
+                  <option value="basura">Basura y Limpieza</option>
+                </select>
+              </div>
+              
+              <div class="forgot-password">
+                <a href="#">¿Olvidó su contraseña?</a>
+              </div>
+              
+              <button type="submit" class="action-button login-button">
+                INICIAR SESIÓN
+              </button>
+            </form>
+          </div>
         </div>
-    </header>
+      </div>
+    </div>
+  </main>
 
-    <main>
-        <div class="container">
-            <!-- Formulario de inicio de sesión -->
-            <div class="form-container">
-                <!-- Panel de inicio de sesión -->
-                <div class="panel panel-login">
-                    <div class="briefcase-icon-container">
-                        <div class="briefcase-svg-container">
-                            <!-- SVG Briefcase (maletín) similar a la imagen de referencia -->
-                            <svg width="160" height="160" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <!-- Forma del maletín -->
-                                <path d="M20 6H16V4C16 2.89 15.11 2 14 2H10C8.89 2 8 2.89 8 4V6H4C2.89 6 2 6.89 2 8V19C2 20.11 2.89 21 4 21H20C21.11 21 22 20.11 22 19V8C22 6.89 21.11 6 20 6Z" fill="#107A30"/>
-                                
-                                <!-- Manija y detalles -->
-                                <path d="M14 6H10V4H14V6Z" fill="#107A30" stroke="white" stroke-width="0.5"/>
-                                
-                                <!-- Círculo blanco en el centro -->
-                                <circle cx="12" cy="15" r="3" fill="white"/>
-                            </svg>
-                        </div>
-                    </div>
-                    
-                    <div class="form-section">
-                        <h1>Acceso Empleado</h1>
-                        
-                        <form id="login-form">
-                            <div class="form-group">
-                                <label for="login-email">Correo Electrónico:</label>
-                                <input type="email" id="login-email" name="email" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="login-password">Contraseña:</label>
-                                <input type="password" id="login-password" name="password" required>
-                            </div>
-                            
-                            <div class="forgot-password">
-                                <a href="#">¿Olvidó su contraseña?</a>
-                            </div>
-                            
-                            <button type="submit" class="action-button login-button">INICIAR SESIÓN</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
+  <script>
+    document.getElementById('login-form').addEventListener('submit', async e => {
+      e.preventDefault();
 
-   <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        document.getElementById('login-form').addEventListener('submit', async function (e) {
-            e.preventDefault();
+      const email       = document.getElementById('login-email').value;
+      const password    = document.getElementById('login-password').value;
+      const dependencia = document.getElementById('login-dependencia').value;
 
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
+      // 1) Intentar login como empleado
+      let res = await fetch('/api/login-empleado', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
 
-            try {
-                const response = await fetch('/api/login-empleado', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
+      if (res.ok) {
+        const { empleado } = await res.json();
+        localStorage.setItem('empleadoData', JSON.stringify(empleado));
+        window.location.href = '/panel-autoridades.html';
+        return;
+      }
 
-                const result = await response.json();
+      // 2) Si falla con 401, intentar como supervisor
+      if (res.status === 401) {
+        // Validar que haya seleccionado dependencia
+        if (!dependencia) {
+          alert('Para acceder como supervisor, seleccione su dependencia.');
+          return;
+        }
 
-                if (response.ok && result.success) {
-    alert('Bienvenido, ' + result.empleado.Nombre);
-
-    // 🔐 Guardar al empleado en localStorage
-    localStorage.setItem('empleadoData', JSON.stringify(result.empleado));
-
-    // Redirigir al panel de reportes
-    window.location.href = '/panel-autoridades.html';
-}
-
- else {
-                    alert(result.message || 'Credenciales inválidas');
-                }
-            } catch (error) {
-                console.error(error);
-                alert('Error al conectar con el servidor');
-            }
+        res = await fetch('/api/login-supervisor', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, dependencia })
         });
+
+        if (res.ok) {
+          const { supervisor } = await res.json();
+          // Normalizo campos a minúsculas del objeto
+          sessionStorage.setItem('supervisor', JSON.stringify({
+            nombre: supervisor.nombre,
+            dependencia: supervisor.dependencia,
+            IdEmpleado: supervisor.id
+          }));
+          window.location.href = '/panel-autoridades.html';
+          return;
+        }
+      }
+
+      // 3) Si ambos fallan:
+      const err = await res.json().catch(() => ({ message: 'Credenciales inválidas' }));
+      alert(err.message || 'Credenciales inválidas');
     });
-</script>
+  </script>
 </body>
 </html>
