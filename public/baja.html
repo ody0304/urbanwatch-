@@ -15,8 +15,7 @@
       color: white;
       font-weight: 500;
     }
-    .user-actions a,
-    .user-actions button {
+    .user-actions a, .user-actions button {
       background: none;
       border: none;
       color: inherit;
@@ -29,18 +28,12 @@
   <header>
     <div class="logo">
       <div class="logo-circle"></div>
-      <div class="logo-text-container">
-        <div class="logo-text">URBANWATCH</div>
-      </div>
+      <div class="logo-text">URBANWATCH</div>
     </div>
     <div class="user-actions">
       <span id="user-display">Cargando...</span>
-      <a href="index.html" title="Ir al inicio">
-        <i class="fas fa-home"></i>
-      </a>
-      <button onclick="logout()" title="Cerrar sesión">
-        <i class="fas fa-sign-out-alt"></i>
-      </button>
+      <a href="login-supervisor.html" title="Ir al inicio"><i class="fas fa-home"></i></a>
+      <button onclick="logout()" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></button>
     </div>
   </header>
 
@@ -77,16 +70,7 @@
           <div class="table-cell">Correo</div>
           <div class="table-cell">Departamento</div>
         </div>
-        <div class="table-body">
-          <div class="table-row empty-state">
-            <div class="table-cell" colspan="4">
-              <div class="empty-message">
-                <i class="fas fa-info-circle"></i>
-                <p>No hay empleados dados de baja en este momento</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div class="table-body"></div>
       </div>
     </div>
   </main>
@@ -95,7 +79,6 @@
     let supervisorSesion = null;
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Inicializar usuario
       const supData = sessionStorage.getItem('supervisor');
       if (!supData) {
         alert('Debe iniciar sesión primero.');
@@ -103,15 +86,12 @@
       }
       supervisorSesion = JSON.parse(supData);
 
-      // Mostrar nombre y rol
       const nombre = supervisorSesion.nombre || supervisorSesion.Nombre;
       const dep    = supervisorSesion.dependencia || supervisorSesion.Departamento;
       document.getElementById('user-display').textContent = `Supervisor ${nombre} (${dep})`;
 
-      // Cargar lista de bajas
       cargarBajas();
 
-      // Listener del formulario de baja
       document.getElementById('baja-empleado-form')
         .addEventListener('submit', async e => {
           e.preventDefault();
@@ -120,7 +100,7 @@
           try {
             const res = await fetch('/api/baja-empleado', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: {'Content-Type':'application/json'},
               body: JSON.stringify({ idEmpleado: idEmp, correo })
             });
             const txt = await res.text();
@@ -182,5 +162,3 @@
   </script>
 </body>
 </html>
-
-
