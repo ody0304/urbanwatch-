@@ -132,33 +132,26 @@
 
     async function cargarReportes() {
   try {
-    // 1) Usa usuarioActual, no empleadoActual
     const depRaw = usuarioActual.dependencia || usuarioActual.Departamento;
     const code   = depRaw.toLowerCase().replace(/\s+/g, '');
-    
-    // 2) Elige endpoint correcto
     const endpoint = esSupervisor
       ? `/api/reportes-supervisor/${code}`
       : `/api/reportes-empleado/${code}`;
-    
-    // 3) Log para depurar
-    console.log('🚀 [cargarReportes] fetch a:', endpoint);
-    
-    // 4) Fetch
+
+    console.log('🚀 Llamando a:', endpoint);
     const res = await fetch(endpoint);
-    console.log('⬇️ Estatus del fetch:', res.status);
+    console.log('⬇️ Status:', res.status);
     if (!res.ok) throw new Error(`Status ${res.status}`);
-    
-    // 5) Parseo y más logs
+
     reportes = await res.json();
-    console.log('✅ [cargarReportes] datos recibidos:', reportes);
-    
+    console.log('✅ Reportes:', reportes);
+
     reportesFiltrados = [...reportes];
     mostrarReportes();
     actualizarEstadisticas();
-    
+
   } catch (err) {
-    console.error('💥 [cargarReportes] Error:', err);
+    console.error('💥 cargarReportes() failed:', err);
     document.getElementById('reportes-container').innerHTML = `
       <div class="error">
         <i class="fas fa-exclamation-triangle"></i>
@@ -166,6 +159,7 @@
       </div>`;
   }
 }
+
 
 
 

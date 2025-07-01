@@ -576,29 +576,36 @@ app.post('/api/login-supervisor', async (req, res) => {
     }
 });
 
-// Traer reportes filtrados por dependencia para supervisores
+// 2) Endpoint supervisor:
 app.get('/api/reportes-supervisor/:dep', async (req, res) => {
-  const { dep } = req.params;  // por ejemplo "agua", "alumbrado", "baches" o "basura"
+  const { dep } = req.params;  // "agua", "alumbrado", "baches" o "basura"
   try {
     await sql.connect(dbConfig);
-    // Asumo que tu tabla de reportes tiene una columna "Categoria" con estos mismos valores
+    // Ajusta "Categoria" al nombre real de tu columna en la tabla de Reportes
     const result = await sql.query`
       SELECT
-        IdReporte,
-        Titulo,
-        Direccion,
-        Urgencia,
-        FechaCreacion,
-        CorreoCiudadano,
-        EsAnonimo,
-        EstadoActual
-      FROM Reportes
-      WHERE Categoria = ${dep}
+        r.IdReporte,
+        r.Titulo,
+        r.Direccion,
+        r.Urgencia,
+        r.FechaCreacion,
+        r.CorreoCiudadano,
+        r.EsAnonimo,
+        er.Estado AS EstadoActual
+      FROM Reportes r
+      LEFT JOIN (
+        SELECT IdReporte, Estado, Fecha,
+               ROW_NUMBER() OVER (PARTITION BY IdReporte ORDER BY Fecha DESC) rn
+        FROM EstadoReporte
+      ) er
+        ON r.IdReporte = er.IdReporte AND er.rn = 1
+      WHERE r.Categoria = ${dep}
+      ORDER BY r.FechaCreacion DESC
     `;
-    res.json(result.recordset);
+    return res.json(result.recordset);
   } catch (err) {
-    console.error('Error en /api/reportes-supervisor:', err);
-    res.status(500).json({ message: 'Error al cargar reportes de supervisor' });
+    console.error('❌ Error en GET /api/reportes-supervisor:', err);
+    return res.status(500).json({ message: 'Error al cargar reportes de supervisor' });
   }
 });
 
