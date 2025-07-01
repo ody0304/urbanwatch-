@@ -576,6 +576,32 @@ app.post('/api/login-supervisor', async (req, res) => {
     }
 });
 
+// Traer reportes filtrados por dependencia para supervisores
+app.get('/api/reportes-supervisor/:dep', async (req, res) => {
+  const { dep } = req.params;  // por ejemplo "agua", "alumbrado", "baches" o "basura"
+  try {
+    await sql.connect(dbConfig);
+    // Asumo que tu tabla de reportes tiene una columna "Categoria" con estos mismos valores
+    const result = await sql.query`
+      SELECT
+        IdReporte,
+        Titulo,
+        Direccion,
+        Urgencia,
+        FechaCreacion,
+        CorreoCiudadano,
+        EsAnonimo,
+        EstadoActual
+      FROM Reportes
+      WHERE Categoria = ${dep}
+    `;
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Error en /api/reportes-supervisor:', err);
+    res.status(500).json({ message: 'Error al cargar reportes de supervisor' });
+  }
+});
+
 // NUEVOS ENDPOINTS PARA RECUPERACIÓN DE CONTRASEÑA
 
 // Verificar email y dependencia para recuperación

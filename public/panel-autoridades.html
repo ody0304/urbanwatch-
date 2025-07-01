@@ -131,29 +131,44 @@
     }
 
     async function cargarReportes() {
-      try {
-        // Normalizar código de dependencia
-        const depRaw = usuarioActual.dependencia || usuarioActual.Departamento;
-        const code = depRaw.toLowerCase().replace(/\s+/g, '');
-        const endpoint = esSupervisor
-          ? `/api/reportes-supervisor/${code}`
-          : `/api/reportes-empleado/${code}`;
-
-        const res = await fetch(endpoint);
-        if (!res.ok) throw new Error();
-        reportes = await res.json();
-        reportesFiltrados = [...reportes];
-
-        mostrarReportes();
-        actualizarEstadisticas();
-      } catch {
-        document.getElementById('reportes-container').innerHTML = `
-          <div class="error">
-            <i class="fas fa-exclamation-triangle"></i>
-            <p>Error al cargar los reportes.</p>
-          </div>`;
-      }
+  try {
+    // 1) Determinar código de dependencia (sin espacios, minúsculas)
+    const depRaw = usuarioActual.dependencia || usuarioActual.Departamento;
+    const code   = depRaw.toLowerCase().replace(/\s+/g, '');
+    
+    // 2) Elegir endpoint según rol
+    const endpoint = esSupervisor
+      ? `/api/reportes-supervisor/${code}`
+      : `/api/reportes-empleado/${code}`;
+    
+    // 3) Logs para verificar
+    console.log('🚀 cargando reportes desde:', endpoint);
+    
+    // 4) Hacer fetch
+    const res = await fetch(endpoint);
+    if (!res.ok) {
+      console.error('🛑 respuesta no OK:', res.status);
+      throw new Error('Error en status ' + res.status);
     }
+    
+    // 5) Leer JSON y volver a loguear
+    reportes = await res.json();
+    console.log('✅ reportes recibidos:', reportes);
+    
+    reportesFiltrados = [...reportes];
+    mostrarReportes();
+    actualizarEstadisticas();
+
+  } catch (err) {
+    console.error('💥 Error en cargarReportes():', err);
+    document.getElementById('reportes-container').innerHTML = `
+      <div class="error">
+        <i class="fas fa-exclamation-triangle"></i>
+        <p>Error al cargar los reportes.</p>
+      </div>`;
+  }
+}
+
 
     function filtrarPorEstado(estado) {
       const nombres = {
