@@ -7,7 +7,7 @@ const crypto     = require('crypto');
 const cors       = require('cors');
 const nodemailer = require('nodemailer');
 const dbConfig   = require('./dbconfig');
-
+const jwt        = require('jsonwebtoken');   // ← AÑADE ESTA LÍNEA
 const app  = express();
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.BASE_URL || `https://urbanwatch.onrender.com`;
@@ -290,12 +290,13 @@ app.post('/api/login', async (req, res) => {
     }
 
     console.log('🔐 Generando JWT');
-    const token = jwt.sign(
-      { id: user.Id, email: user.Correo },
-      process.env.JWT_SECRET,
-      { expiresIn: '2h' }
-    );
-    console.log('✅ JWT generado');
+const token = jwt.sign(
+  { id: user.Id, email: user.Correo },
+  process.env.JWT_SECRET,
+  { expiresIn: '2h' }
+);
+console.log('✅ JWT generado');
+
 
     return res.json({
       success: true,
