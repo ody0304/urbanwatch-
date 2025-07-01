@@ -98,18 +98,16 @@
     let reportes = [];
     let reportesFiltrados = [];
     let usuarioActual = null;
-    let esSupervisor  = false;
+    let esSupervisor = false;
 
     document.addEventListener('DOMContentLoaded', verificarAutenticacion);
 
     function verificarAutenticacion() {
-      // ¿Supervisor?
       const sup = sessionStorage.getItem('supervisor');
       if (sup) {
         usuarioActual = JSON.parse(sup);
-        esSupervisor  = true;
+        esSupervisor = true;
       } else {
-        // Empleado
         const emp = localStorage.getItem('empleadoData');
         if (!emp) {
           window.location.href = 'login-empleado.html';
@@ -118,9 +116,8 @@
         usuarioActual = JSON.parse(emp);
       }
 
-      // Mostrar info de usuario
       const nombre = usuarioActual.nombre || usuarioActual.Nombre;
-      const dep    = usuarioActual.dependencia || usuarioActual.Departamento;
+      const dep = usuarioActual.dependencia || usuarioActual.Departamento;
       document.getElementById('usuario-info').textContent =
         esSupervisor
           ? `Supervisor ${nombre} (${dep})`
@@ -131,45 +128,41 @@
     }
 
     async function cargarReportes() {
-  try {
-    const depRaw = usuarioActual.dependencia || usuarioActual.Departamento;
-    const code   = depRaw.toLowerCase().replace(/\s+/g, '');
-    const endpoint = esSupervisor
-      ? `/api/reportes-supervisor/${code}`
-      : `/api/reportes-empleado/${code}`;
+      try {
+        const depRaw = usuarioActual.dependencia || usuarioActual.Departamento;
+        const code = depRaw.toLowerCase().replace(/\s+/g, '');
+        const endpoint = esSupervisor
+          ? `/api/reportes-supervisor/${code}`
+          : `/api/reportes-empleado/${code}`;
 
-    console.log('🚀 Llamando a:', endpoint);
-    const res = await fetch(endpoint);
-    console.log('⬇️ Status:', res.status);
-    if (!res.ok) throw new Error(`Status ${res.status}`);
+        console.log('🚀 Llamando a:', endpoint);
+        const res = await fetch(endpoint);
+        console.log('⬇️ Status:', res.status);
+        if (!res.ok) throw new Error(`Status ${res.status}`);
 
-    reportes = await res.json();
-    console.log('✅ Reportes:', reportes);
+        reportes = await res.json();
+        console.log('✅ Reportes:', reportes);
 
-    reportesFiltrados = [...reportes];
-    mostrarReportes();
-    actualizarEstadisticas();
-
-  } catch (err) {
-    console.error('💥 cargarReportes() failed:', err);
-    document.getElementById('reportes-container').innerHTML = `
-      <div class="error">
-        <i class="fas fa-exclamation-triangle"></i>
-        <p>Error al cargar los reportes.</p>
-      </div>`;
-  }
-}
-
-
-
+        reportesFiltrados = [...reportes];
+        mostrarReportes();
+        actualizarEstadisticas();
+      } catch (err) {
+        console.error('💥 cargarReportes() failed:', err);
+        document.getElementById('reportes-container').innerHTML = `
+          <div class="error">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Error al cargar los reportes.</p>
+          </div>`;
+      }
+    }
 
     function filtrarPorEstado(estado) {
       const nombres = {
-        'todos':'Todos',
-        'recibido':'Recibidos',
-        'proceso':'En Proceso',
-        'verificado':'Verificados',
-        'reparado':'Reparados'
+        todos: 'Todos',
+        recibido: 'Recibidos',
+        proceso: 'En Proceso',
+        verificado: 'Verificados',
+        reparado: 'Reparados'
       };
       const btn = document.getElementById('filtro-estado');
       btn.dataset.estado = estado;
@@ -178,22 +171,33 @@
     }
 
     function filtrarPorUrgencia(urg) {
-      const nombres = {'todas':'Todas','alta':'Alta','media':'Media','baja':'Baja','critico':'Crítico'};
-      const sinon = {'alto':'alta','medio':'media','bajo':'baja','crítico':'critico'};
+      const nombres = {
+        todas: 'Todas',
+        alta: 'Alta',
+        media: 'Media',
+        baja: 'Baja',
+        critico: 'Crítico'
+      };
+      const sinon = {
+        alto: 'alta',
+        medio: 'media',
+        bajo: 'baja',
+        crítico: 'critico'
+      };
       const btn = document.getElementById('filtro-urgencia');
       btn.dataset.urgencia = urg;
       btn.innerHTML = `Urgencia ${nombres[urg]} <span class="arrow-down">▼</span>`;
       aplicarFiltros(sinon);
     }
 
-    function aplicarFiltros(sinon={}) {
-      const estado  = document.getElementById('filtro-estado').dataset.estado || 'todos';
-      const urgencia= document.getElementById('filtro-urgencia').dataset.urgencia || 'todas';
+    function aplicarFiltros(sinon = {}) {
+      const estado = document.getElementById('filtro-estado').dataset.estado || 'todos';
+      const urgencia = document.getElementById('filtro-urgencia').dataset.urgencia || 'todas';
       reportesFiltrados = reportes.filter(r => {
-        const e = (r.EstadoActual||'recibido').toLowerCase();
-        const u0= (r.Urgencia||'').toLowerCase();
-        const u = sinon[u0]||u0;
-        return (estado==='todos'||e===estado) && (urgencia==='todas'||u===urgencia);
+        const e = (r.EstadoActual || 'recibido').toLowerCase();
+        const u0 = (r.Urgencia || '').toLowerCase();
+        const u = sinon[u0] || u0;
+        return (estado === 'todos' || e === estado) && (urgencia === 'todas' || u === urgencia);
       });
       mostrarReportes();
       actualizarEstadisticas();
@@ -205,39 +209,51 @@
         container.innerHTML = `<div class="empty"><p>No hay reportes.</p></div>`;
         return;
       }
-      // ocultar columna acciones para supervisores
+
+      // Ocultar cabecera de acciones para supervisores
       document.querySelector('.table-header .actions')
-              .style.display = esSupervisor ? 'none' : 'block';
+        .style.display = esSupervisor ? 'none' : 'block';
 
       container.innerHTML = reportesFiltrados.map(r => {
-        const e = (r.EstadoActual||'recibido').toLowerCase();
-        const u = (r.Urgencia||'').toLowerCase();
+        const e = (r.EstadoActual || 'recibido').toLowerCase();
+        const u = (r.Urgencia || '').toLowerCase();
+
         const detalleBtn = `
           <button class="detalle-btn"
             onclick="location.href='detalle-reporte.html?id=${r.IdReporte}'">
             Ver Detalle
           </button>`;
-        const acciones = esSupervisor ? ''
-          : `<div class="table-cell actions">
-               <select class="estado-select" data-id="${r.IdReporte}">
-                 <option value="recibido"   ${e==='recibido'?'selected':''}>Recibido</option>
-                 <option value="proceso"    ${e==='proceso'?'selected':''}>En Proceso</option>
-                 <option value="verificado" ${e==='verificado'?'selected':''}>Verificado</option>
-                 <option value="reparado"   ${e==='reparado'?'selected':''}>Reparado</option>
-               </select>
-               <button onclick="actualizarEstado(${r.IdReporte})">Actualizar</button>
-             </div>`;
 
-        return `<div class="table-row estado-${e}">
-          <div class="table-cell">${r.IdReporte}</div>
-          <div class="table-cell">${r.Titulo}</div>
-          <div class="table-cell">${r.Direccion}</div>
-          <div class="table-cell"><span class="urgencia-${u}">${r.Urgencia}</span></div>
-          <div class="table-cell">${new Date(r.FechaCreacion).toLocaleString('es-ES')}</div>
-          <div class="table-cell">${r.EsAnonimo?'<em>Anónimo</em>':r.CorreoCiudadano}</div>
-          <div class="table-cell">${detalleBtn}</div>
-          ${acciones}
-        </div>`;
+        let accionesHTML = '';
+        // Solo empleados y si no está en "reparado"
+        if (!esSupervisor && e !== 'reparado') {
+          accionesHTML = `
+            <div class="table-cell actions">
+              <select class="estado-select" data-id="${r.IdReporte}">
+                <option value="recibido"   ${e === 'recibido' ? 'selected' : ''}>Recibido</option>
+                <option value="proceso"    ${e === 'proceso' ? 'selected' : ''}>En Proceso</option>
+                <option value="verificado" ${e === 'verificado' ? 'selected' : ''}>Verificado</option>
+                <option value="reparado"   ${e === 'reparado' ? 'selected' : ''}>Reparado</option>
+              </select>
+              <button onclick="actualizarEstado(${r.IdReporte})">Actualizar</button>
+            </div>`;
+        }
+
+        return `
+          <div class="table-row estado-${e}">
+            <div class="table-cell">${r.IdReporte}</div>
+            <div class="table-cell">${r.Titulo}</div>
+            <div class="table-cell">${r.Direccion}</div>
+            <div class="table-cell">
+              <span class="urgencia-${u}">${r.Urgencia}</span>
+            </div>
+            <div class="table-cell">${new Date(r.FechaCreacion).toLocaleString('es-ES')}</div>
+            <div class="table-cell">
+              ${r.EsAnonimo ? '<em>Anónimo</em>' : r.CorreoCiudadano}
+            </div>
+            <div class="table-cell">${detalleBtn}</div>
+            ${accionesHTML}
+          </div>`;
       }).join('');
     }
 
@@ -246,10 +262,13 @@
       const sel = document.querySelector(`.estado-select[data-id="${id}"]`);
       try {
         await fetch('/api/actualizar-estado-reporte', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ idReporte:id, estado:sel.value, empleadoId:usuarioActual.IdEmpleado })
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idReporte: id, estado: sel.value, empleadoId: usuarioActual.IdEmpleado })
         });
-        reportes.find(r=>r.IdReporte===id).EstadoActual = sel.value;
+        // Reflejar cambio local
+        const rep = reportes.find(r => r.IdReporte === id);
+        if (rep) rep.EstadoActual = sel.value;
         aplicarFiltros();
         alert('Estado actualizado');
       } catch {
@@ -259,15 +278,15 @@
 
     function actualizarEstadisticas() {
       const s = {
-        nuevos:   reportesFiltrados.filter(r=>!r.EstadoActual||r.EstadoActual==='recibido').length,
-        proceso:  reportesFiltrados.filter(r=>r.EstadoActual==='proceso'||r.EstadoActual==='verificado').length,
-        cerrados: reportesFiltrados.filter(r=>r.EstadoActual==='reparado').length,
-        total:    reportesFiltrados.length
+        nuevos: reportesFiltrados.filter(r => !r.EstadoActual || r.EstadoActual === 'recibido').length,
+        proceso: reportesFiltrados.filter(r => r.EstadoActual === 'proceso' || r.EstadoActual === 'verificado').length,
+        cerrados: reportesFiltrados.filter(r => r.EstadoActual === 'reparado').length,
+        total: reportesFiltrados.length
       };
-      document.getElementById('stat-nuevos').textContent   = s.nuevos;
+      document.getElementById('stat-nuevos').textContent = s.nuevos;
       document.getElementById('stat-proceso').textContent = s.proceso;
-      document.getElementById('stat-cerrados').textContent= s.cerrados;
-      document.getElementById('stat-total').textContent   = s.total;
+      document.getElementById('stat-cerrados').textContent = s.cerrados;
+      document.getElementById('stat-total').textContent = s.total;
     }
 
     function logout() {
@@ -276,20 +295,21 @@
       window.location.href = esSupervisor ? 'login-supervisor.html' : 'login-empleado.html';
     }
 
-    // dropdowns
+    // Dropdowns
     function cerrarDropdowns() {
-      document.querySelectorAll('.dropdown-content').forEach(d=>d.style.display='none');
+      document.querySelectorAll('.dropdown-content').forEach(d => d.style.display = 'none');
     }
-    document.querySelectorAll('.dropdown-button').forEach(b=>{
+    document.querySelectorAll('.dropdown-button').forEach(b => {
       b.onclick = () => {
         const c = b.nextElementSibling;
         cerrarDropdowns();
-        c.style.display = c.style.display==='block'?'none':'block';
+        c.style.display = c.style.display === 'block' ? 'none' : 'block';
       };
     });
-    window.addEventListener('click', e=>{
-      if (!e.target.matches('.dropdown-button') && !e.target.matches('.arrow-down'))
+    window.addEventListener('click', e => {
+      if (!e.target.matches('.dropdown-button') && !e.target.matches('.arrow-down')) {
         cerrarDropdowns();
+      }
     });
   </script>
 </body>
