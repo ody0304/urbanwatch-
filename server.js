@@ -1,34 +1,29 @@
 // server.js
-require('dotenv').config();           // 1) Carga las variables de entorno
+require('dotenv').config();
 const express    = require('express');
-const sql        = require('mssql');
-const cors       = require('cors');
 const path       = require('path');
-const nodemailer = require('nodemailer');   // ← Agregado
-const dbConfig   = require('./dbconfig');
-const jwt = require('jsonwebtoken');
-// Asegúrate de instalar: npm install jsonwebtoken
+const sql        = require('mssql');
+const crypto     = require('crypto');
+const cors       = require('cors');
+const nodemailer = require('nodemailer');
+const dbConfig   = require('./dbconfig');    // tu configuración de SQL Server
+const { transporter } = require('./mailer'); // llega tu transporter de nodemailer
+// const { transporter } = require('./config'); // o como lo tengas
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`API escuchando en puerto ${PORT}`));
-const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+const BASE_URL = process.env.BASE_URL || `https://urbanwatch.onrender.com`;
 
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json());
-
-// Verificación por consola de la configuración
-console.log("📦 Configuración de BD:", dbConfig);
-
-// Intentar conectar a la base de datos
-sql.connect(dbConfig)
-  .then(() => console.log("✅ Conectado a la base de datos"))
-  .catch(err => console.error("❌ Error al conectar a la base de datos:", err));
-
-// Middlewares
-app.use(cors());
+// 1) Middlewares
 app.use(express.json({ limit: '10mb' }));
+app.use(cors());  
 app.use(express.static(path.join(__dirname, 'public')));
+
+// 2) Verificar conexión a BD al arrancar
+sql.connect(dbConfig)
+  .then(() => console.log('✅ Conectado a la base de datos'))
+  .catch(err => console.error('❌ Error al conectar a la base de datos:', err));
+
 
 app.listen(PORT, () => {
   console.log(`🚀 Servidor escuchando en ${BASE_URL}`);
@@ -167,7 +162,7 @@ app.post('/api/registro', async (req, res) => {
   try {
     const { nombre, email, password } = req.body;
 
-    // 1) Validar formato de contraseña
+    // Validación
     if (!pwdRegex.test(password)) {
       return res.status(400).json({
         success: false,
@@ -175,27 +170,38 @@ app.post('/api/registro', async (req, res) => {
       });
     }
 
-    // 2) Generar token y fecha de expiración
+    // Token y expiración
     const token   = crypto.randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 1000*60*60*24);
 
-    // 3) Guardar usuario
-    await sql.connect(dbConfig);
+    // Guardar en Ciudadanos
     await sql.query`
-      INSERT INTO Ciudadanos (Nombre, Correo, Contrasena, verificationToken, tokenExpires)
-      VALUES (${nombre}, ${email}, ${password}, ${token}, ${expires})
+      INSERT INTO Ciudadanos 
+        (Nombre, Correo, Contrasena, verificationToken, tokenExpires)
+      VALUES
+        (${nombre}, ${email}, ${password}, ${token}, ${expires})
     `;
 
-    // 4) Enviar mail
+    // Enviar correo
     const verifyUrl = `${BASE_URL}/verify-email?token=${token}`;
-    await transporter.sendMail({ /* … */ });
+    await transporter.sendMail({
+      from:    '"UrbanWatch" <no-reply@urbanwatch.com>',
+      to:      email,
+      subject: 'Verifica tu correo en UrbanWatch',
+      html: `
+        <p>Hola ${nombre},</p>
+        <p>Para activar tu cuenta haz clic aquí:</p>
+        <a href="${verifyUrl}">Verificar correo</a>
+      `
+    });
 
-    // 5) Responder
-    return res.json({ success: true, message: 'Revisa tu correo para verificar tu cuenta.' });
+    return res.json({
+      success: true,
+      message: 'Revisa tu correo para verificar tu cuenta.'
+    });
 
   } catch (err) {
     console.error('Error en POST /api/registro:', err);
-    // siempre devolvemos JSON, nunca HTML
     const isDup = err.number === 2627;
     return res
       .status(isDup ? 400 : 500)
@@ -206,6 +212,16 @@ app.post('/api/registro', async (req, res) => {
           : 'Error interno del servidor.'
       });
   }
+});
+
+// 5) Ruta GET /verify-email (opcional)
+app.get('/verify-email', async (req, res) => {
+  // … tu lógica de verificación …
+});
+
+// 6) Levantar servidor
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor escuchando en ${BASE_URL}`);
 });
 
 
