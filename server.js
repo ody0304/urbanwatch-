@@ -259,34 +259,30 @@ app.post('/api/login', async (req, res) => {
   try {
     await sql.connect(dbConfig);
     const result = await sql.query`
-      SELECT Id, Nombre, Correo
+      SELECT user_id, Nombre AS nombre, Correo AS correo
       FROM Ciudadanos
-      WHERE Correo = ${email} AND Contrasena = ${password}
+      WHERE Correo = ${email} AND Contrasena = ${password} AND verified = 1
     `;
-    if (result.recordset.length === 0) {
+    if (!result.recordset.length) {
       return res.status(401).json({ success: false, message: 'Credenciales inválidas' });
     }
-
-    const user = result.recordset[0];
-    // Genera un JWT con el ID y correo
+    // Genera token (por ejemplo JWT)
     const token = jwt.sign(
-      { id: user.Id, correo: user.Correo },
+      { id: result.recordset[0].user_id, email },
       process.env.JWT_SECRET,
-      { expiresIn: '8h' }
+      { expiresIn: '2h' }
     );
-
-    // Devuelve success, token y datos básicos del usuario
     return res.json({
       success: true,
       token,
       user: {
-        nombre: user.Nombre,
-        correo: user.Correo
+        nombre: result.recordset[0].nombre,
+        correo: result.recordset[0].correo
       }
     });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, message: 'Error al iniciar sesión' });
+    console.error('Error en POST /api/login:', err);
+    return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 });
 
