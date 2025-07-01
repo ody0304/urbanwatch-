@@ -4,6 +4,7 @@ const express    = require('express');
 const sql        = require('mssql');
 const cors       = require('cors');
 const path       = require('path');
+const nodemailer = require('nodemailer');   // ← Agregado
 const dbConfig   = require('./dbconfig');
 
 const app  = express();
@@ -18,13 +19,10 @@ sql.connect(dbConfig)
   .then(() => console.log("✅ Conectado a la base de datos"))
   .catch(err => console.error("❌ Error al conectar a la base de datos:", err));
 
-
 // Middlewares
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-// Sirve los archivos estáticos de la carpeta /public
 app.use(express.static(path.join(__dirname, 'public')));
-
 
 app.listen(PORT, () => {
   console.log(`🚀 Servidor escuchando en ${BASE_URL}`);
@@ -38,6 +36,7 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS?.trim()
   }
 });
+
 
 app.post('/api/test-email', async (req, res) => {
   const to = req.body.email;
