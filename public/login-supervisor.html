@@ -1,104 +1,87 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URBANWATCH - Acceso Supervisor</title>
-    <link rel="stylesheet" href="login-supervisor-style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>URBANWATCH - Acceso Supervisor</title>
+  <link rel="stylesheet" href="login-supervisor-style.css">
 </head>
 <body>
-    <header>
-        <div class="logo">
-            <div class="logo-circle"></div>
-            <div class="logo-text">URBANWATCH</div>
+  <header>
+    <div class="logo">
+      <div class="logo-circle"></div>
+      <div class="logo-text">URBANWATCH</div>
+    </div>
+  </header>
+  <main>
+    <div class="container">
+      <div class="form-container">
+        <div class="panel panel-login">
+          <div class="shield-icon-container">
+            <!-- SVG del escudo -->
+            <svg width="160" height="190" viewBox="0 0 160 190" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M80 0L160 45V135L80 190L0 135V45L80 0Z" fill="#F59E0B"/>
+              <path d="M50 60L110 130" stroke="white" stroke-width="20" stroke-linecap="round"/>
+              <path d="M110 60L50 130" stroke="white" stroke-width="20" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="form-section">
+            <h1>Acceso Supervisor</h1>
+            <form id="login-form">
+              <div class="form-group">
+                <label for="login-email">Correo Electrónico:</label>
+                <input type="email" id="login-email" name="email" required>
+              </div>
+              <div class="form-group">
+                <label for="dependencia">Dependencia:</label>
+                <select id="dependencia" name="dependencia" required>
+                  <option value="">Seleccione una dependencia</option>
+                  <option value="agua">Agua</option>
+                  <option value="alumbrado">Alumbrado Público</option>
+                  <option value="baches">Baches y Calles</option>
+                  <option value="basura">Basura y Limpieza</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="login-password">Contraseña:</label>
+                <input type="password" id="login-password" name="password" required>
+              </div>
+              <div class="forgot-password">
+                <a href="recuperar-contrasena.html">¿Olvidó su contraseña?</a>
+              </div>
+              <button type="submit" class="action-button login-button">INICIAR SESIÓN</button>
+            </form>
+          </div>
         </div>
-    </header>
+      </div>
+    </div>
+  </main>
 
-    <main>
-        <div class="container">
-            <!-- Formulario de inicio de sesión -->
-            <div class="form-container">
-                <!-- Panel de inicio de sesión -->
-                <div class="panel panel-login">
-                    <div class="shield-icon-container">
-                        <div class="shield-svg-container">
-                            <!-- SVG Shield con X interna similar a la imagen de referencia -->
-                            <svg width="160" height="190" viewBox="0 0 160 190" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <!-- Forma de escudo hexagonal -->
-                                <path d="M80 0L160 45V135L80 190L0 135V45L80 0Z" fill="#F59E0B"/>
-                                
-                                <!-- X blanca dentro del escudo (con suavizado) -->
-                                <path d="M50 60L110 130" stroke="white" stroke-width="20" stroke-linecap="round"/>
-                                <path d="M110 60L50 130" stroke="white" stroke-width="20" stroke-linecap="round"/>
-                            </svg>
-                        </div>
-                    </div>
+  <script>
+    document.getElementById('login-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const email = this.email.value;
+      const password = this.password.value;
+      const dependencia = this.dependencia.value;
 
-                    <div class="form-section">
-                        <h1>Acceso Supervisor</h1>
-
-                        <form id="login-form">
-                            <div class="form-group">
-                                <label for="login-email">Correo Electrónico:</label>
-                                <input type="email" id="login-email" name="email" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="dependencia">Dependencia:</label>
-                                <select id="dependencia" name="dependencia" required>
-                                    <option value="">Seleccione una dependencia</option>
-                                    <option value="agua">Agua</option>
-                                    <option value="alumbrado">Alumbrado Público</option>
-                                    <option value="baches">Baches y Calles</option>
-                                    <option value="basura">Basura y Limpieza</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="login-password">Contraseña:</label>
-                                <input type="password" id="login-password" name="password" required>
-                            </div>
-
-                            <div class="forgot-password">
-                                <a href="recuperar-contrasena.html">¿Olvidó su contraseña?</a>
-                            </div>
-
-                            <button type="submit" class="action-button login-button">INICIAR SESIÓN</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <script>
-document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('login-form').addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const email = document.getElementById('login-email').value;
-        const password = document.getElementById('login-password').value;
-        const dependencia = document.getElementById('dependencia').value;
-
-        const response = await fetch('/api/login-supervisor', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password, dependencia })
+      try {
+        const res = await fetch('/api/login-supervisor', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ email, password, dependencia })
         });
-
-        const result = await response.json();
+        const result = await res.json();
         if (result.success) {
-            // **GUARDA en sessionStorage** el objeto supervisor
-            sessionStorage.setItem(
-              'supervisor',
-              JSON.stringify(result.supervisor)
-            );
-            // ahora sí redirige
-            window.location.href = 'alta.html';
+          sessionStorage.setItem('supervisor', JSON.stringify(result.supervisor));
+          window.location.href = 'alta.html';
         } else {
-            alert(result.message || 'Credenciales inválidas');
+          alert(result.message || 'Credenciales inválidas');
         }
+      } catch (err) {
+        console.error('Error en login:', err);
+        alert('Error al iniciar sesión.');
+      }
     });
-});
-</script>
+  </script>
 </body>
 </html>

@@ -2,38 +2,22 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>URBANWATCH – Baja de Empleados</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>URBANWATCH - Baja de Empleados</title>
   <link rel="stylesheet" href="baja-style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    .user-actions {
-      margin-left: auto;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      color: white;
-      font-weight: 500;
-    }
-    .user-actions a, .user-actions button {
-      background: none;
-      border: none;
-      color: inherit;
-      cursor: pointer;
-      font-size: 1.2em;
-    }
-  </style>
 </head>
 <body>
   <header>
     <div class="logo">
       <div class="logo-circle"></div>
-      <div class="logo-text">URBANWATCH</div>
+      <div class="logo-text-container">
+        <div class="logo-text" id="urbanwatch-title">URBANWATCH</div>
+      </div>
     </div>
-    <div class="user-actions">
-      <span id="user-display">Cargando...</span>
-      <a href="login-supervisor.html" title="Ir al inicio"><i class="fas fa-home"></i></a>
-      <button onclick="logout()" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></button>
+    <div class="supervisor-info">
+      <span id="supervisor-correo">supervisor@ejemplo.com</span>
+      <button onclick="cerrarSesion()" class="logout-btn"><i class="fas fa-sign-out-alt"></i></button>
     </div>
   </header>
 
@@ -50,7 +34,7 @@
     <div class="form-container">
       <form id="baja-empleado-form">
         <div class="form-group">
-          <label for="id-empleado">ID Empleado:</label>
+          <label for="id-empleado">ID Empleado</label>
           <input type="text" id="id-empleado" name="idEmpleado" required>
         </div>
         <div class="form-group">
@@ -70,7 +54,16 @@
           <div class="table-cell">Correo</div>
           <div class="table-cell">Departamento</div>
         </div>
-        <div class="table-body"></div>
+        <div class="table-body">
+          <div class="table-row empty-state">
+            <div class="table-cell" colspan="4">
+              <div class="empty-message">
+                <i class="fas fa-info-circle"></i>
+                <p>No hay empleados dados de baja en este momento</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </main>
@@ -85,49 +78,43 @@
         return window.location.href = 'login-supervisor.html';
       }
       supervisorSesion = JSON.parse(supData);
-
-      const nombre = supervisorSesion.nombre || supervisorSesion.Nombre;
-      const dep    = supervisorSesion.dependencia || supervisorSesion.Departamento;
-      document.getElementById('user-display').textContent = `Supervisor ${nombre} (${dep})`;
+      document.getElementById('supervisor-correo').textContent = supervisorSesion.correo;
 
       cargarBajas();
 
-      document.getElementById('baja-empleado-form')
-        .addEventListener('submit', async e => {
-          e.preventDefault();
-          const idEmp = document.getElementById('id-empleado').value;
-          const correo= document.getElementById('correo').value;
-          try {
-            const res = await fetch('/api/baja-empleado', {
-              method: 'POST',
-              headers: {'Content-Type':'application/json'},
-              body: JSON.stringify({ idEmpleado: idEmp, correo })
-            });
-            const txt = await res.text();
-            if (!res.ok) throw new Error(txt);
-            alert('Empleado dado de baja correctamente');
-            e.target.reset();
-            cargarBajas();
-          } catch (err) {
-            console.error('Error en baja:', err);
-            alert('Error al dar de baja: ' + err.message);
-          }
-        });
+      document.getElementById('baja-empleado-form').addEventListener('submit', async e => {
+        e.preventDefault();
+        const idEmpleado = e.target.idEmpleado.value;
+        const correo = e.target.correo.value;
+        try {
+          const res = await fetch('/api/baja-empleado', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ idEmpleado, correo })
+          });
+          const text = await res.text();
+          if (!res.ok) throw new Error(text);
+          alert('Empleado dado de baja correctamente');
+          e.target.reset();
+          cargarBajas();
+        } catch (err) {
+          console.error('Error en baja:', err);
+          alert('Error al dar de baja: ' + err.message);
+        }
+      });
     });
 
     async function cargarBajas() {
       try {
-        const url = `/api/bajas/${supervisorSesion.dependencia}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('No se pudo obtener bajas');
+        const res = await fetch(`/api/bajas/${supervisorSesion.dependencia}`);
+        if (!res.ok) throw new Error(`${res.status}`);
         const bajas = await res.json();
 
-        const tbody  = document.querySelector('.table-body');
+        const tbody = document.querySelector('.table-body');
         const titulo = document.querySelector('.employees-list-container h3');
         titulo.textContent = `Empleados Dados de Baja (${bajas.length})`;
-        tbody.innerHTML = '';
 
-        if (!bajas.length) {
+        if (bajas.length === 0) {
           tbody.innerHTML = `
             <div class="table-row empty-state">
               <div class="table-cell" colspan="4">
@@ -136,10 +123,12 @@
                   <p>No hay empleados dados de baja en este momento</p>
                 </div>
               </div>
-            </div>`;
+            </div>
+          `;
           return;
         }
 
+        tbody.innerHTML = '';
         bajas.forEach(emp => {
           tbody.innerHTML += `
             <div class="table-row">
@@ -147,16 +136,17 @@
               <div class="table-cell">${emp.Nombre || '—'}</div>
               <div class="table-cell">${emp.Correo}</div>
               <div class="table-cell">${emp.Departamento || '—'}</div>
-            </div>`;
+            </div>
+          `;
         });
       } catch (err) {
         console.error('Error al cargar bajas:', err);
-        alert('Error al cargar la lista de empleados dados de baja');
+        alert('Error al cargar la lista de empleados dados de baja.');
       }
     }
 
-    function logout() {
-      sessionStorage.clear();
+    function cerrarSesion() {
+      sessionStorage.removeItem('supervisor');
       window.location.href = 'login-supervisor.html';
     }
   </script>

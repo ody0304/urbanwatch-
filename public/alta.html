@@ -2,38 +2,22 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>URBANWATCH – Alta de Empleados</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>URBANWATCH - Alta de Empleados</title>
   <link rel="stylesheet" href="alta-style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    .user-actions {
-      margin-left: auto;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      color: white;
-      font-weight: 500;
-    }
-    .user-actions a, .user-actions button {
-      background: none;
-      border: none;
-      color: inherit;
-      cursor: pointer;
-      font-size: 1.2em;
-    }
-  </style>
 </head>
 <body>
   <header>
     <div class="logo">
       <div class="logo-circle"></div>
-      <div class="logo-text">URBANWATCH</div>
+      <div class="logo-text-container">
+        <div class="logo-text" id="urbanwatch-title">URBANWATCH</div>
+      </div>
     </div>
-    <div class="user-actions">
-      <span id="user-display">Cargando...</span>
-      <a href="login-supervisor.html" title="Ir al inicio"><i class="fas fa-home"></i></a>
-      <button onclick="logout()" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></button>
+    <div class="supervisor-info">
+      <span id="supervisor-correo">supervisor@ejemplo.com</span>
+      <button onclick="cerrarSesion()" class="logout-btn"><i class="fas fa-sign-out-alt"></i></button>
     </div>
   </header>
 
@@ -53,18 +37,21 @@
           <label for="nombre">Nombre Completo:</label>
           <input type="text" id="nombre" name="nombre" required>
         </div>
+
         <div class="form-group">
           <label for="correo">Correo Electrónico:</label>
           <input type="email" id="correo" name="correo" required>
         </div>
+
         <div class="form-group">
           <label for="id-empleado">ID Empleado:</label>
           <input type="text" id="id-empleado" name="idEmpleado" required>
         </div>
+
         <button type="submit" class="submit-btn">Registrar Empleado</button>
       </form>
     </div>
-    
+
     <div class="employees-list-container">
       <h3>Lista de Empleados (0)</h3>
       <div class="employees-table">
@@ -74,7 +61,16 @@
           <div class="table-cell">Correo</div>
           <div class="table-cell">Departamento</div>
         </div>
-        <div class="table-body"></div>
+        <div class="table-body">
+          <div class="table-row empty-state">
+            <div class="table-cell" colspan="4">
+              <div class="empty-message">
+                <i class="fas fa-info-circle"></i>
+                <p>No hay empleados registrados en este momento</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </main>
@@ -83,31 +79,27 @@
     let supervisorSesion = null;
 
     document.addEventListener('DOMContentLoaded', () => {
-      const supData = sessionStorage.getItem('supervisor');
-      if (!supData) {
-        alert('Debe iniciar sesión primero.');
+      const supervisorData = sessionStorage.getItem('supervisor');
+      if (!supervisorData) {
+        console.warn('No hay sesión de supervisor, redirigiendo a login');
         return window.location.href = 'login-supervisor.html';
       }
-      supervisorSesion = JSON.parse(supData);
-
-      const nombre = supervisorSesion.nombre || supervisorSesion.Nombre;
-      const dep    = supervisorSesion.dependencia || supervisorSesion.Departamento;
-      document.getElementById('user-display').textContent = `Supervisor ${nombre} (${dep})`;
-
+      supervisorSesion = JSON.parse(supervisorData);
+      document.getElementById('supervisor-correo').textContent = supervisorSesion.correo;
       cargarEmpleados();
     });
 
     async function cargarEmpleados() {
+      if (!supervisorSesion) return;
+      const url = `/api/empleados/${supervisorSesion.dependencia}`;
       try {
-        const url = `/api/empleados/${supervisorSesion.dependencia}`;
         const res = await fetch(url);
-        if (!res.ok) throw new Error('No se pudo obtener empleados');
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
         const empleados = await res.json();
 
-        const tbody  = document.querySelector('.table-body');
+        const tbody = document.querySelector('.table-body');
         const titulo = document.querySelector('.employees-list-container h3');
         titulo.textContent = `Lista de Empleados (${empleados.length})`;
-        tbody.innerHTML = '';
 
         if (empleados.length === 0) {
           tbody.innerHTML = `
@@ -118,10 +110,12 @@
                   <p>No hay empleados registrados en este momento</p>
                 </div>
               </div>
-            </div>`;
+            </div>
+          `;
           return;
         }
 
+        tbody.innerHTML = ''; // limpiar antes de poblar
         empleados.forEach(emp => {
           tbody.innerHTML += `
             <div class="table-row">
@@ -129,48 +123,43 @@
               <div class="table-cell">${emp.Nombre}</div>
               <div class="table-cell">${emp.Correo}</div>
               <div class="table-cell">${emp.Departamento}</div>
-            </div>`;
+            </div>
+          `;
         });
-      } catch (err) {
-        console.error('Error al cargar empleados:', err);
-        alert('Error al cargar la lista de empleados');
+      } catch (error) {
+        console.error('Error al cargar empleados:', error);
+        alert('Error al cargar la lista de empleados.');
       }
     }
 
-    document.getElementById('alta-empleado-form')
-      .addEventListener('submit', async e => {
-        e.preventDefault();
-        const nombre = document.getElementById('nombre').value;
-        const correo = document.getElementById('correo').value;
-        const idEmp  = document.getElementById('id-empleado').value;
+    document.getElementById('alta-empleado-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const nombre = this.nombre.value;
+      const correo = this.correo.value;
+      const idEmpleado = this.idEmpleado.value;
+      const dependencia = supervisorSesion.dependencia;
+      try {
+        const res = await fetch('/api/alta-empleado', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ nombre, correo, idEmpleado, dependencia })
+        });
+        const text = await res.text();
+        if (!res.ok) throw new Error(text);
+        alert('Empleado registrado correctamente');
+        this.reset();
+        cargarEmpleados();
+      } catch (err) {
+        console.error('Error al registrar:', err);
+        alert('Error al registrar el empleado: ' + err.message);
+      }
+    });
 
-        try {
-          const res = await fetch('/api/alta-empleado', {
-            method: 'POST',
-            headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({
-              nombre,
-              correo,
-              idEmpleado: idEmp,
-              dependencia: supervisorSesion.dependencia
-            })
-          });
-          const txt = await res.text();
-          if (!res.ok) throw new Error(txt);
-
-          alert('Empleado registrado correctamente');
-          e.target.reset();
-          cargarEmpleados();
-        } catch (err) {
-          console.error('Error en alta:', err);
-          alert('Error al registrar empleado: ' + err.message);
-        }
-      });
-
-    function logout() {
-      sessionStorage.clear();
+    function cerrarSesion() {
+      sessionStorage.removeItem('supervisor');
       window.location.href = 'login-supervisor.html';
     }
   </script>
 </body>
 </html>
+
