@@ -33,28 +33,33 @@
               </div>
               
               <div class="form-group">
-  <label for="register-password">Contraseña:</label>
-  <input 
-    type="password" 
-    id="register-password" 
-    name="password" 
-    required
-    pattern="^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8}$"
-    title="8 caracteres, al menos 1 mayúscula, 1 número y 1 carácter especial"
-/>
-</div>
-<div class="form-group">
-  <label for="register-confirm-password">Confirmar Contraseña:</label>
-  <input 
-    type="password" 
-    id="register-confirm-password" 
-    name="confirm-password" 
-    required
-    pattern="^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8}$"
-    title="Debe coincidir y cumplir la misma regla"
-/>
-</div>
+                <label for="register-password">Contraseña:</label>
+                <input 
+                  type="password" 
+                  id="register-password" 
+                  name="password" 
+                  required 
+                  autocomplete="new-password"
+                />
+                <!-- Lista de requisitos en tiempo real -->
+                <ul id="password-requirements" class="password-reqs">
+                  <li id="req-length"    class="invalid">8 caracteres exactos</li>
+                  <li id="req-uppercase" class="invalid">Al menos 1 letra mayúscula</li>
+                  <li id="req-digit"     class="invalid">Al menos 1 número</li>
+                  <li id="req-special"   class="invalid">Al menos 1 carácter especial</li>
+                </ul>
+              </div>
 
+              <div class="form-group">
+                <label for="register-confirm-password">Confirmar Contraseña:</label>
+                <input 
+                  type="password" 
+                  id="register-confirm-password" 
+                  name="confirm-password" 
+                  required 
+                  autocomplete="new-password"
+                />
+              </div>
               
               <div class="buttons-section">
                 <a href="login-ciudadano.html" class="cancel-button">Cancelar</a>
@@ -74,48 +79,82 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('register-form');
-  const pwdRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8}$/;
+      const form       = document.getElementById('register-form');
+      const pwdInput   = document.getElementById('register-password');
+      const confirmIn  = document.getElementById('register-confirm-password');
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+      // Elementos de la lista de requisitos
+      const reqLength    = document.getElementById('req-length');
+      const reqUppercase = document.getElementById('req-uppercase');
+      const reqDigit     = document.getElementById('req-digit');
+      const reqSpecial   = document.getElementById('req-special');
 
-    const nombre = document.getElementById('register-nombre').value.trim();
-    const email  = document.getElementById('register-email').value.trim();
-    const password = document.getElementById('register-password').value;
-    const confirmPassword = document.getElementById('register-confirm-password').value;
+      // Expresiones de cada regla
+      const hasCorrectLength = pwd => pwd.length === 8;
+      const hasUppercase     = pwd => /[A-Z]/.test(pwd);
+      const hasDigit         = pwd => /\d/.test(pwd);
+      const hasSpecial       = pwd => /[^A-Za-z0-9]/.test(pwd);
 
-    // 1) Coincidencia de contraseñas
-    if (password !== confirmPassword) {
-      alert('Las contraseñas no coinciden');
-      return;
-    }
+      // Validación en tiempo real
+      pwdInput.addEventListener('input', () => {
+        const v = pwdInput.value;
 
-    // 2) Validación de la política de contraseña
-    if (!pwdRegex.test(password)) {
-      alert('La contraseña debe tener exactamente 8 caracteres, al menos una letra mayúscula, un número y un carácter especial.');
-      return;
-    }
+        // Toggle clases según cada requisito
+        hasCorrectLength(v)
+          ? reqLength.classList.replace('invalid','valid')
+          : reqLength.classList.replace('valid','invalid');
 
-    // Si todo ok, envía al servidor
-    try {
-      const response = await fetch('/api/registro', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, email, password })
+        hasUppercase(v)
+          ? reqUppercase.classList.replace('invalid','valid')
+          : reqUppercase.classList.replace('valid','invalid');
+
+        hasDigit(v)
+          ? reqDigit.classList.replace('invalid','valid')
+          : reqDigit.classList.replace('valid','invalid');
+
+        hasSpecial(v)
+          ? reqSpecial.classList.replace('invalid','valid')
+          : reqSpecial.classList.replace('valid','invalid');
       });
 
-          // Intentamos parsear JSON; si no es posible, caemos al catch
+      // Al enviar, comprobamos TODO de nuevo
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const nombre          = document.getElementById('register-nombre').value.trim();
+        const email           = document.getElementById('register-email').value.trim();
+        const password        = pwdInput.value;
+        const confirmPassword = confirmIn.value;
+
+        // 1) Contraseñas coinciden
+        if (password !== confirmPassword) {
+          alert('Las contraseñas no coinciden');
+          return;
+        }
+
+        // 2) Todos los requisitos válidos
+        if (!(hasCorrectLength(password) &&
+              hasUppercase(password) &&
+              hasDigit(password) &&
+              hasSpecial(password))) {
+          alert('La contraseña no cumple todos los requisitos.');
+          return;
+        }
+
+        // 3) Envío al servidor
+        try {
+          const response = await fetch('/api/registro', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre, email, password })
+          });
+
           let payload;
-          try {
-            payload = await response.json();
-          } catch {
-            payload = { message: await response.text() };
-          }
+          try { payload = await response.json(); }
+          catch { payload = { message: await response.text() }; }
 
           if (response.ok) {
             alert(payload.message || '¡Registro iniciado! Revisa tu correo.');
-            // Opcional: esperar verificación antes de redirigir
             window.location.href = 'login-ciudadano.html';
           } else {
             alert(`Error ${response.status}: ${payload.message}`);
