@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="alta-style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+    /* Ajustes mínimos para .user-actions */
     .user-actions {
       margin-left: auto;
       display: flex;
@@ -33,11 +34,13 @@
       </div>
     </div>
     <div class="user-actions">
+      <!-- Nombre y rol -->
       <span id="user-display">Cargando...</span>
-      <!-- Home apunta a login-supervisor.html -->
-      <a href="login-supervisor.html" title="Ir al inicio">
+      <!-- Icono Home -->
+      <a href="index.html" title="Ir al inicio">
         <i class="fas fa-home"></i>
       </a>
+      <!-- Cerrar sesión -->
       <button onclick="logout()" title="Cerrar sesión">
         <i class="fas fa-sign-out-alt"></i>
       </button>
@@ -80,7 +83,16 @@
           <div class="table-cell">Correo</div>
           <div class="table-cell">Departamento</div>
         </div>
-        <div class="table-body"></div>
+        <div class="table-body">
+          <div class="table-row empty-state">
+            <div class="table-cell" colspan="4">
+              <div class="empty-message">
+                <i class="fas fa-info-circle"></i>
+                <p>No hay empleados registrados en este momento</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </main>
@@ -89,21 +101,20 @@
     let supervisorSesion = null;
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Verifico sesión
+      // Cargar datos del supervisor desde sessionStorage
       const supData = sessionStorage.getItem('supervisor');
       if (!supData) {
         alert('Debe iniciar sesión primero.');
         return window.location.href = 'login-supervisor.html';
       }
-      supervisorSesion = JSON.parse(supData);
 
-      // Muestro nombre y dependencia
+      supervisorSesion = JSON.parse(supData);
+      // Mostrar “Supervisor Nombre (Dependencia)”
       const nombre = supervisorSesion.nombre || supervisorSesion.Nombre;
       const dep    = supervisorSesion.dependencia || supervisorSesion.Departamento;
-      document.getElementById('user-display')
-              .textContent = `Supervisor ${nombre} (${dep})`;
+      document.getElementById('user-display').textContent = `Supervisor ${nombre} (${dep})`;
 
-      // Cargo tabla
+      // Carga inicial de empleados
       cargarEmpleados();
     });
 
@@ -147,36 +158,30 @@
       }
     }
 
-    // Alta de empleado
-    document.getElementById('alta-empleado-form')
-      .addEventListener('submit', async e => {
-        e.preventDefault();
-        const nombre = document.getElementById('nombre').value;
-        const correo = document.getElementById('correo').value;
-        const idEmp  = document.getElementById('id-empleado').value;
+    document.getElementById('alta-empleado-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const nombre   = document.getElementById('nombre').value;
+      const correo   = document.getElementById('correo').value;
+      const idEmp    = document.getElementById('id-empleado').value;
+      const dep      = supervisorSesion.dependencia;
 
-        try {
-          const res = await fetch('/api/alta-empleado', {
-            method: 'POST',
-            headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({
-              nombre,
-              correo,
-              idEmpleado: idEmp,
-              dependencia: supervisorSesion.dependencia
-            })
-          });
-          const txt = await res.text();
-          if (!res.ok) throw new Error(txt);
+      try {
+        const res = await fetch('/api/alta-empleado', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre, correo, idEmpleado: idEmp, dependencia: dep })
+        });
+        const txt = await res.text();
+        if (!res.ok) throw new Error(txt);
 
-          alert('Empleado registrado correctamente');
-          e.target.reset();
-          cargarEmpleados();
-        } catch (err) {
-          console.error('Error en alta:', err);
-          alert('Error al registrar empleado: ' + err.message);
-        }
-      });
+        alert('Empleado registrado correctamente');
+        e.target.reset();
+        cargarEmpleados();
+      } catch (err) {
+        console.error('Error en alta:', err);
+        alert('Error al registrar empleado: ' + err.message);
+      }
+    });
 
     function logout() {
       sessionStorage.clear();
@@ -185,3 +190,4 @@
   </script>
 </body>
 </html>
+
