@@ -1,28 +1,71 @@
-<!-- ciudadanos-portal.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>URBANWATCH - Portal Ciudadanos</title>
+
+  <!-- Estilos externos -->
   <link rel="stylesheet" href="ciudadanos-portal-style.css">
-  <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+  <!-- Estilos inline para header y user-actions -->
+  <style>
+    header {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      background: #2457c5;
+      color: white;
+    }
+    .logo { display: flex; align-items: center; }
+    .logo-circle {
+      width: 40px; height: 40px;
+      background: white; border-radius: 50%;
+      margin-right: 0.5rem;
+    }
+    .logo-text { font-size: 1.5rem; font-weight: bold; }
+    .user-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-weight: 500;
+    }
+    .user-actions span { font-size: 0.9rem; }
+    .user-actions a,
+    .user-actions button {
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+  </style>
 </head>
 <body>
+  <!-- Verificación de token -->
   <script>
-    // Verificar que haya token antes de mostrar nada
     const token = localStorage.getItem('tokenCiudadano');
     if (!token) {
       window.location.href = 'login-ciudadano.html';
     }
-    // Opcional: podrías validar token contra servidor aquí
+    // opcional: validación adicional contra servidor
   </script>
 
   <header>
     <div class="logo">
       <div class="logo-circle"></div>
       <div class="logo-text">URBANWATCH</div>
+    </div>
+    <div class="user-actions">
+      <span id="user-display">Cargando...</span>
+      <a href="inicio.html" title="Ir al inicio">
+        <i class="fas fa-home"></i>
+      </a>
+      <button onclick="logout()" title="Cerrar sesión">
+        <i class="fas fa-sign-out-alt"></i>
+      </button>
     </div>
   </header>
 
@@ -35,6 +78,7 @@
         </div>
         <div class="button-hover-effect"></div>
       </a>
+
       <a href="consultar.html" class="action-button" id="consultar-btn">
         <div class="button-content status-button">
           <div class="button-icon"><i class="fas fa-search"></i></div>
@@ -50,10 +94,29 @@
   </footer>
 
   <script>
-    // Hover en botones (igual que antes)
+    function inicializarCiudadano() {
+      const data = localStorage.getItem('ciudadanoData');
+      if (!data) {
+        return window.location.href = 'login-ciudadano.html';
+      }
+      const c = JSON.parse(data);
+      document.getElementById('user-display').textContent =
+        `Ciudadano ${c.nombre || c.Nombre}`;
+    }
+
+    function logout() {
+      localStorage.removeItem('ciudadanoData');
+      window.location.href = 'login-ciudadano.html';
+    }
+
+    // Efecto hover en botones
     document.querySelectorAll('.action-button').forEach(btn => {
       btn.addEventListener('mouseenter', () => btn.classList.add('hover'));
       btn.addEventListener('mouseleave', () => btn.classList.remove('hover'));
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      inicializarCiudadano();
     });
   </script>
 </body>
