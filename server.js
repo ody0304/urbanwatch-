@@ -12,14 +12,12 @@ const app  = express();
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.BASE_URL || `https://urbanwatch.onrender.com`;
 
-// 1) Instancia UNA vez el transporter
+// Sólo UNA vez, antes de usarlo:
 const transporter = nodemailer.createTransport({
-  host: process.env.MAIL_HOST,
-  port: Number(process.env.MAIL_PORT),
-  secure: process.env.MAIL_SECURE === 'true',
+  service: 'gmail',               // puedes usar 'gmail' en vez de host/port
   auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS  // tu app password de Gmail
   }
 });
 
@@ -33,12 +31,11 @@ sql.connect(dbConfig)
   .then(() => console.log('✅ Conectado a la base de datos'))
   .catch(err => console.error('❌ Error al conectar a la BD:', err));
 
-// 4) Verificar SMTP
+// Verificación (opcional):
 transporter.verify((err, success) => {
-  if (err) console.error('❌ SMTP error:', err);
+  if (err) console.warn('⚠️ SMTP warning:', err.message);
   else     console.log('✅ SMTP listo para enviar correos');
 });
-
 
 app.post('/api/test-email', async (req, res) => {
   const to = req.body.email;
