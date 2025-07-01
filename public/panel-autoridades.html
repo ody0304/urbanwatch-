@@ -132,35 +132,33 @@
 
     async function cargarReportes() {
   try {
-    // 1) Determinar código de dependencia (sin espacios, minúsculas)
+    // 1) Usa usuarioActual, no empleadoActual
     const depRaw = usuarioActual.dependencia || usuarioActual.Departamento;
     const code   = depRaw.toLowerCase().replace(/\s+/g, '');
     
-    // 2) Elegir endpoint según rol
+    // 2) Elige endpoint correcto
     const endpoint = esSupervisor
       ? `/api/reportes-supervisor/${code}`
       : `/api/reportes-empleado/${code}`;
     
-    // 3) Logs para verificar
-    console.log('🚀 cargando reportes desde:', endpoint);
+    // 3) Log para depurar
+    console.log('🚀 [cargarReportes] fetch a:', endpoint);
     
-    // 4) Hacer fetch
+    // 4) Fetch
     const res = await fetch(endpoint);
-    if (!res.ok) {
-      console.error('🛑 respuesta no OK:', res.status);
-      throw new Error('Error en status ' + res.status);
-    }
+    console.log('⬇️ Estatus del fetch:', res.status);
+    if (!res.ok) throw new Error(`Status ${res.status}`);
     
-    // 5) Leer JSON y volver a loguear
+    // 5) Parseo y más logs
     reportes = await res.json();
-    console.log('✅ reportes recibidos:', reportes);
+    console.log('✅ [cargarReportes] datos recibidos:', reportes);
     
     reportesFiltrados = [...reportes];
     mostrarReportes();
     actualizarEstadisticas();
-
+    
   } catch (err) {
-    console.error('💥 Error en cargarReportes():', err);
+    console.error('💥 [cargarReportes] Error:', err);
     document.getElementById('reportes-container').innerHTML = `
       <div class="error">
         <i class="fas fa-exclamation-triangle"></i>
@@ -168,6 +166,7 @@
       </div>`;
   }
 }
+
 
 
     function filtrarPorEstado(estado) {
