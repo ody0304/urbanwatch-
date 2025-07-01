@@ -1,9 +1,8 @@
-require('dotenv').config();
+// server.js
+require('dotenv').config();           // 1) Carga las variables de entorno
 const express    = require('express');
 const sql        = require('mssql');
 const cors       = require('cors');
-const crypto     = require('crypto');
-const nodemailer = require('nodemailer');
 const path       = require('path');
 const dbConfig   = require('./dbconfig');
 
@@ -11,13 +10,25 @@ const app  = express();
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
-console.log("Driver activo:", dbConfig.driver || 'default (tedious)');
-console.log("Conectando con config:", dbConfig);
+// Verificación por consola de la configuración
+console.log("📦 Configuración de BD:", dbConfig);
+
+// Intentar conectar a la base de datos
+sql.connect(dbConfig)
+  .then(() => console.log("✅ Conectado a la base de datos"))
+  .catch(err => console.error("❌ Error al conectar a la base de datos:", err));
+
 
 // Middlewares
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static('public'));
+// Sirve los archivos estáticos de la carpeta /public
+app.use(express.static(path.join(__dirname, 'public')));
+
+
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor escuchando en ${BASE_URL}`);
+});
 
 // Transportador de correo
 const transporter = nodemailer.createTransport({
