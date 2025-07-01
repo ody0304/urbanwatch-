@@ -4,8 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>URBANWATCH - Registro de Ciudadano</title>
-  <link rel="stylesheet" href="registro-style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Al estar en public/, el CSS se servirá como /registro-style.css -->
+  <link rel="stylesheet" href="/registro-style.css">
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
   <header>
@@ -41,7 +43,6 @@
                   required 
                   autocomplete="new-password"
                 />
-                <!-- Lista de requisitos en tiempo real -->
                 <ul id="password-requirements" class="password-reqs">
                   <li id="req-length"    class="invalid">8 caracteres exactos</li>
                   <li id="req-uppercase" class="invalid">Al menos 1 letra mayúscula</li>
@@ -62,14 +63,16 @@
               </div>
               
               <div class="buttons-section">
-                <a href="login-ciudadano.html" class="cancel-button">Cancelar</a>
-                <button type="submit" class="action-button register-button">REGISTRARSE</button>
+                <a href="/login-ciudadano.html" class="cancel-button">Cancelar</a>
+                <button type="submit" class="action-button register-button">
+                  REGISTRARSE
+                </button>
               </div>
             </form>
             
             <div class="toggle-panel">
               <p>¿Ya tienes una cuenta?</p>
-              <a href="login-ciudadano.html" class="toggle-button">Iniciar Sesión</a>
+              <a href="/login-ciudadano.html" class="toggle-button">Iniciar Sesión</a>
             </div>
           </div>
         </div>
@@ -78,94 +81,82 @@
   </main>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const form       = document.getElementById('register-form');
-      const pwdInput   = document.getElementById('register-password');
-      const confirmIn  = document.getElementById('register-confirm-password');
+  document.addEventListener('DOMContentLoaded', () => {
+    const form       = document.getElementById('register-form');
+    const pwdInput   = document.getElementById('register-password');
+    const confirmIn  = document.getElementById('register-confirm-password');
 
-      // Elementos de la lista de requisitos
-      const reqLength    = document.getElementById('req-length');
-      const reqUppercase = document.getElementById('req-uppercase');
-      const reqDigit     = document.getElementById('req-digit');
-      const reqSpecial   = document.getElementById('req-special');
+    const reqLength    = document.getElementById('req-length');
+    const reqUppercase = document.getElementById('req-uppercase');
+    const reqDigit     = document.getElementById('req-digit');
+    const reqSpecial   = document.getElementById('req-special');
 
-      // Expresiones de cada regla
-      const hasCorrectLength = pwd => pwd.length === 8;
-      const hasUppercase     = pwd => /[A-Z]/.test(pwd);
-      const hasDigit         = pwd => /\d/.test(pwd);
-      const hasSpecial       = pwd => /[^A-Za-z0-9]/.test(pwd);
+    const hasCorrectLength = pwd => pwd.length === 8;
+    const hasUppercase     = pwd => /[A-Z]/.test(pwd);
+    const hasDigit         = pwd => /\d/.test(pwd);
+    const hasSpecial       = pwd => /[^A-Za-z0-9]/.test(pwd);
 
-      // Validación en tiempo real
-      pwdInput.addEventListener('input', () => {
-        const v = pwdInput.value;
+    pwdInput.addEventListener('input', () => {
+      const v = pwdInput.value;
 
-        // Toggle clases según cada requisito
-        hasCorrectLength(v)
-          ? reqLength.classList.replace('invalid','valid')
-          : reqLength.classList.replace('valid','invalid');
+      hasCorrectLength(v)
+        ? reqLength.classList.replace('invalid','valid')
+        : reqLength.classList.replace('valid','invalid');
 
-        hasUppercase(v)
-          ? reqUppercase.classList.replace('invalid','valid')
-          : reqUppercase.classList.replace('valid','invalid');
+      hasUppercase(v)
+        ? reqUppercase.classList.replace('invalid','valid')
+        : reqUppercase.classList.replace('valid','invalid');
 
-        hasDigit(v)
-          ? reqDigit.classList.replace('invalid','valid')
-          : reqDigit.classList.replace('valid','invalid');
+      hasDigit(v)
+        ? reqDigit.classList.replace('invalid','valid')
+        : reqDigit.classList.replace('valid','invalid');
 
-        hasSpecial(v)
-          ? reqSpecial.classList.replace('invalid','valid')
-          : reqSpecial.classList.replace('valid','invalid');
-      });
-
-      // Al enviar, comprobamos TODO de nuevo
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const nombre          = document.getElementById('register-nombre').value.trim();
-        const email           = document.getElementById('register-email').value.trim();
-        const password        = pwdInput.value;
-        const confirmPassword = confirmIn.value;
-
-        // 1) Contraseñas coinciden
-        if (password !== confirmPassword) {
-          alert('Las contraseñas no coinciden');
-          return;
-        }
-
-        // 2) Todos los requisitos válidos
-        if (!(hasCorrectLength(password) &&
-              hasUppercase(password) &&
-              hasDigit(password) &&
-              hasSpecial(password))) {
-          alert('La contraseña no cumple todos los requisitos.');
-          return;
-        }
-
-        // 3) Envío al servidor
-        try {
-          const response = await fetch('/api/registro', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nombre, email, password })
-          });
-
-          let payload;
-          try { payload = await response.json(); }
-          catch { payload = { message: await response.text() }; }
-
-          if (response.ok) {
-            alert(payload.message || '¡Registro iniciado! Revisa tu correo.');
-            window.location.href = 'login-ciudadano.html';
-          } else {
-            alert(`Error ${response.status}: ${payload.message}`);
-            console.error('Error en /api/registro:', response.status, payload);
-          }
-        } catch (networkError) {
-          console.error('Error de red:', networkError);
-          alert('No se pudo conectar con el servidor. Intenta nuevamente más tarde.');
-        }
-      });
+      hasSpecial(v)
+        ? reqSpecial.classList.replace('invalid','valid')
+        : reqSpecial.classList.replace('valid','invalid');
     });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const nombre          = document.getElementById('register-nombre').value.trim();
+      const email           = document.getElementById('register-email').value.trim();
+      const password        = pwdInput.value;
+      const confirmPassword = confirmIn.value;
+
+      if (password !== confirmPassword) {
+        return alert('Las contraseñas no coinciden');
+      }
+
+      if (!(hasCorrectLength(password) &&
+            hasUppercase(password) &&
+            hasDigit(password) &&
+            hasSpecial(password))) {
+        return alert('La contraseña no cumple todos los requisitos.');
+      }
+
+      try {
+        const response = await fetch('/api/registro', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre, email, password })
+        });
+
+        const payload = await response.json().catch(() => ({ message: 'Respuesta no JSON' }));
+
+        if (response.ok) {
+          alert(payload.message || '¡Registro exitoso! Revisa tu correo.');
+          window.location.href = '/login-ciudadano.html';
+        } else {
+          alert(`Error ${response.status}: ${payload.message}`);
+          console.error('Error en /api/registro:', response.status, payload);
+        }
+      } catch (networkError) {
+        console.error('Error de red:', networkError);
+        alert('No se pudo conectar con el servidor. Intenta nuevamente más tarde.');
+      }
+    });
+  });
   </script>
 </body>
 </html>
