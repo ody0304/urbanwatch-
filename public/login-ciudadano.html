@@ -64,47 +64,48 @@
   <div id="password-recovery-modal" class="modal">…</div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Modal recovery code… (igual que antes)
+document.getElementById('login-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const emailEl = document.getElementById('login-email');
+  const pwdEl   = document.getElementById('login-password');
+  const email   = emailEl.value.trim();
+  const password= pwdEl.value;
 
-      // LOGIN
-      document.getElementById('login-form').addEventListener('submit', async e => {
-        e.preventDefault();
-        const emailEl = document.getElementById('login-email');
-        const pwdEl   = document.getElementById('login-password');
-        const email   = emailEl.value;
-        const password= pwdEl.value;
-        // Validación de correo
-        const regex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
-        if (!regex.test(email)) {
-          emailEl.setCustomValidity('Por favor ingresa un correo válido');
-          emailEl.reportValidity();
-          return;
-        } else {
-          emailEl.setCustomValidity('');
-        }
+  // Validación rápida de formato de correo
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!regex.test(email)) {
+    emailEl.setCustomValidity('Ingresa un correo válido');
+    emailEl.reportValidity();
+    return;
+  }
+  emailEl.setCustomValidity('');
 
-        try {
-          const resp = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-          });
-          const result = await resp.json();
-          if (result.success && result.token) {
-            // guardamos correo y token
-            localStorage.setItem('correoCiudadano', email);
-            localStorage.setItem('tokenCiudadano', result.token);
-            // redirigimos
-            window.location.href = 'ciudadanos-portal.html';
-          } else {
-            alert(result.message || 'Error al iniciar sesión');
-          }
-        } catch (err) {
-          alert('Error de conexión. Intente nuevamente.');
-        }
-      });
+  try {
+    const resp = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
     });
-  </script>
+    const result = await resp.json();
+
+    if (result.success && result.token) {
+      // Guarda token y datos del usuario
+      localStorage.setItem('tokenCiudadano', result.token);
+      localStorage.setItem(
+        'ciudadanoData',
+        JSON.stringify({ nombre: result.user.nombre, correo: result.user.correo })
+      );
+      // Redirige al portal
+      window.location.href = 'ciudadanos-portal.html';
+    } else {
+      alert(result.message || 'Usuario o contraseña incorrectos');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Error de conexión. Intenta de nuevo.');
+  }
+});
+</script>
+
 </body>
 </html>

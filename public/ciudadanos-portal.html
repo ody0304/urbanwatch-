@@ -52,7 +52,6 @@
     }
     // Opcional: validación adicional contra servidor
   </script>
-
   <header>
     <div class="logo">
       <div class="logo-circle"></div>
@@ -95,14 +94,12 @@
 
   <script>
     function inicializarCiudadano() {
-      const data = localStorage.getItem('ciudadanoData');
-      if (!data) {
-        return window.location.href = 'login-ciudadano.html';
-      }
-      const c = JSON.parse(data);
-      document.getElementById('user-display').textContent =
-        `Ciudadano ${c.nombre || c.Nombre}`;
-    }
+  const data = JSON.parse(localStorage.getItem('ciudadanoData') || '{}');
+  if (!data.nombre) {
+    return window.location.href = 'login-ciudadano.html';
+  }
+  document.getElementById('user-display').textContent = `Ciudadano ${data.nombre}`;
+}
 
     function logout() {
       localStorage.removeItem('ciudadanoData');

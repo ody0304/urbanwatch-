@@ -6,6 +6,8 @@ const cors       = require('cors');
 const path       = require('path');
 const nodemailer = require('nodemailer');   // ← Agregado
 const dbConfig   = require('./dbconfig');
+const jwt = require('jsonwebtoken');
+// Asegúrate de instalar: npm install jsonwebtoken
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -263,20 +265,37 @@ app.post('/api/login', async (req, res) => {
   try {
     await sql.connect(dbConfig);
     const result = await sql.query`
-      SELECT * FROM Ciudadanos
+      SELECT Id, Nombre, Correo
+      FROM Ciudadanos
       WHERE Correo = ${email} AND Contrasena = ${password}
     `;
     if (result.recordset.length === 0) {
       return res.status(401).json({ success: false, message: 'Credenciales inválidas' });
     }
 
-    // Ya no comprobamos el campo verified, dejamos entrar a cualquiera con credenciales válidas
-    return res.json({ success: true });
+    const user = result.recordset[0];
+    // Genera un JWT con el ID y correo
+    const token = jwt.sign(
+      { id: user.Id, correo: user.Correo },
+      process.env.JWT_SECRET,
+      { expiresIn: '8h' }
+    );
+
+    // Devuelve success, token y datos básicos del usuario
+    return res.json({
+      success: true,
+      token,
+      user: {
+        nombre: user.Nombre,
+        correo: user.Correo
+      }
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ success: false, message: 'Error al iniciar sesión' });
   }
 });
+
 
 
 // Arranque del servidor
