@@ -11,7 +11,6 @@ const app  = express();
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
-
 console.log("Driver activo:", dbConfig.driver || 'default (tedious)');
 console.log("Conectando con config:", dbConfig);
 
@@ -144,11 +143,7 @@ async function crearTablas() {
 }
 crearTablas();
 
-const express = require('express');
-const crypto  = require('crypto');
-const sql     = require('mssql');
-const { dbConfig, BASE_URL, transporter } = require('./config'); // ajusta según tu estructura
-
+// Registro con verificación por correo
 // Expresión regular: 8 caracteres, al menos 1 mayúscula, 1 dígito y 1 carácter especial
 const pwdRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8}$/;
 
@@ -217,7 +212,6 @@ app.post('/api/registro', async (req, res) => {
       });
   }
 });
-
 
 
 // Verificación de correo
