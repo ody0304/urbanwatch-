@@ -144,12 +144,15 @@ async function crearTablas() {
 }
 crearTablas();
 
+const express = require('express');
+const crypto  = require('crypto');
+const sql     = require('mssql');
+const { dbConfig, BASE_URL, transporter } = require('./config'); // ajusta según tu estructura
 
 // Expresión regular: 8 caracteres, al menos 1 mayúscula, 1 dígito y 1 carácter especial
 const pwdRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8}$/;
 
-
-router.post('/api/registro', async (req, res) => {
+app.post('/api/registro', async (req, res) => {
   const { nombre, email, password } = req.body;
 
   // 1) Validar formato de contraseña
@@ -165,7 +168,7 @@ router.post('/api/registro', async (req, res) => {
   const expires = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 horas
 
   try {
-    // 3) Conectar y guardar el usuario
+    // 3) Guardar el usuario en la base de datos
     await sql.connect(dbConfig);
     await sql.query`
       INSERT INTO Ciudadanos 
@@ -215,7 +218,7 @@ router.post('/api/registro', async (req, res) => {
   }
 });
 
-module.exports = router;
+
 
 // Verificación de correo
 app.get('/verify-email', async (req, res) => {
