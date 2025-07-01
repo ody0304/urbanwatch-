@@ -1,67 +1,60 @@
+<!-- ciudadanos-portal.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URBANWATCH - Portal Ciudadanos</title>
-    <link rel="stylesheet" href="ciudadanos-portal-style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>URBANWATCH - Portal Ciudadanos</title>
+  <link rel="stylesheet" href="ciudadanos-portal-style.css">
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <header>
-        <div class="logo">
-            <div class="logo-circle"></div>
-            <div class="logo-text">URBANWATCH</div>
+  <script>
+    // Verificar que haya token antes de mostrar nada
+    const token = localStorage.getItem('tokenCiudadano');
+    if (!token) {
+      window.location.href = 'login-ciudadano.html';
+    }
+    // Opcional: podrías validar token contra servidor aquí
+  </script>
+
+  <header>
+    <div class="logo">
+      <div class="logo-circle"></div>
+      <div class="logo-text">URBANWATCH</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="action-buttons">
+      <a href="reportar.html" class="action-button" id="reportar-btn">
+        <div class="button-content report-button">
+          <div class="button-icon"><i class="fas fa-exclamation-triangle"></i></div>
+          <div class="button-text">Reportar<br>Problema</div>
         </div>
-    </header>
-
-    <main>
-        <div class="action-buttons">
-            <!-- Reportar Problema con enlace directo -->
-            <a href="reportar.html" class="action-button" id="reportar-btn">
-                <div class="button-content report-button">
-                    <div class="button-icon">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </div>
-                    <div class="button-text">
-                        Reportar<br>Problema
-                    </div>
-                </div>
-                <div class="button-hover-effect"></div>
-            </a>
-            
-            <!-- Consultar Estado con enlace directo -->
-            <a href="consultar.html" class="action-button" id="consultar-btn">
-                <div class="button-content status-button">
-                    <div class="button-icon">
-                        <i class="fas fa-search"></i>
-                    </div>
-                    <div class="button-text">
-                        Consultar<br>Estado
-                    </div>
-                </div>
-                <div class="button-hover-effect"></div>
-            </a>
+        <div class="button-hover-effect"></div>
+      </a>
+      <a href="consultar.html" class="action-button" id="consultar-btn">
+        <div class="button-content status-button">
+          <div class="button-icon"><i class="fas fa-search"></i></div>
+          <div class="button-text">Consultar<br>Estado</div>
         </div>
-    </main>
+        <div class="button-hover-effect"></div>
+      </a>
+    </div>
+  </main>
 
-    <footer>
-        <p>CONTACTOS</p>
-    </footer>
+  <footer>
+    <p>CONTACTOS</p>
+  </footer>
 
-    <script>
-        // Solo queda el efecto de hover en los botones
-        const buttons = document.querySelectorAll('.action-button');
-        
-        buttons.forEach(button => {
-            button.addEventListener('mouseenter', function() {
-                this.classList.add('hover');
-            });
-            
-            button.addEventListener('mouseleave', function() {
-                this.classList.remove('hover');
-            });
-        });
-    </script>
+  <script>
+    // Hover en botones (igual que antes)
+    document.querySelectorAll('.action-button').forEach(btn => {
+      btn.addEventListener('mouseenter', () => btn.classList.add('hover'));
+      btn.addEventListener('mouseleave', () => btn.classList.remove('hover'));
+    });
+  </script>
 </body>
 </html>

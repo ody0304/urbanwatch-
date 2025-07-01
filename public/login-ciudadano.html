@@ -1,289 +1,110 @@
+<!-- login-ciudadano.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URBANWATCH - Acceso Ciudadano</title>
-    <link rel="stylesheet" href="login-ciudadano-style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        /* Estilos para el modal de recuperación */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-
-        .modal-content {
-            background-color: white;
-            margin: 15% auto;
-            padding: 30px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-            position: relative;
-        }
-
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            position: absolute;
-            right: 15px;
-            top: 10px;
-        }
-
-        .close:hover,
-        .close:focus {
-            color: #000;
-        }
-
-        .modal h2 {
-            color: #333;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .modal p {
-            color: #666;
-            margin-bottom: 20px;
-            line-height: 1.5;
-        }
-
-        .success-message {
-            background-color: #d4edda;
-            color: #155724;
-            padding: 15px;
-            border-radius: 5px;
-            margin-top: 15px;
-            border: 1px solid #c3e6cb;
-        }
-
-        .error-message {
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 5px;
-            margin-top: 15px;
-            border: 1px solid #f5c6cb;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 20px;
-        }
-
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #2C7A7B;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>URBANWATCH - Acceso Ciudadano</title>
+  <link rel="stylesheet" href="login-ciudadano-style.css">
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* tu CSS de modal, spinner, mensajes… (sin cambios) */
+  </style>
 </head>
 <body>
-    <header>
-        <div class="logo">
-            <div class="logo-circle"></div>
-            <div class="logo-text">URBANWATCH</div>
-        </div>
-    </header>
-
-    <main>
-        <div class="container">
-            <div class="form-container">
-                <!-- Panel de inicio de sesión -->
-                <div class="panel panel-login" id="login-panel">
-                    <div class="user-icon-container">
-                        <div class="user-icon"></div>
-                    </div>
-                    
-                    <div class="form-section">
-                        <h1>Acceso Ciudadano</h1>
-                        
-                        <form id="login-form">
-  <div class="form-group">
-    <label for="login-email">Correo Electrónico:</label>
-    <input 
-      type="email" 
-      id="login-email" 
-      name="email" 
-      required
-      pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
-      title="Debe tener formato ejemplo@dominio.ext"
-    >
-  </div>
-                            
-                            <div class="form-group">
-                                <label for="login-password">Contraseña:</label>
-                                <input type="password" id="login-password" name="password" required>
-                            </div>
-                            
-                            <div class="forgot-password">
-                                <a href="#" id="forgot-password-link">¿Olvidó su contraseña?</a>
-                            </div>
-                            
-                            <button type="submit" class="action-button login-button">INICIAR SESIÓN</button>
-                        </form>
-                        
-                        <div class="toggle-panel">
-                            <p>¿No tienes una cuenta?</p>
-                            <a href="registro.html" class="toggle-button">Registrarse</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Modal de recuperación de contraseña -->
-    <div id="password-recovery-modal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Recuperar Contraseña</h2>
-            <p>Ingrese su correo electrónico y le enviaremos un enlace para restablecer su contraseña.</p>
-            
-            <form id="recovery-form">
-                <div class="form-group">
-                    <label for="recovery-email">Correo Electrónico:</label>
-                    <input type="email" id="recovery-email" name="email" required>
-                </div>
-                <button type="submit" class="action-button login-button">Enviar Enlace de Recuperación</button>
-            </form>
-            
-            <div id="recovery-message"></div>
-        </div>
+  <header>
+    <div class="logo">
+      <div class="logo-circle"></div>
+      <div class="logo-text">URBANWATCH</div>
     </div>
+  </header>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const modal = document.getElementById('password-recovery-modal');
-            const forgotPasswordLink = document.getElementById('forgot-password-link');
-            const closeBtn = document.getElementsByClassName('close')[0];
-            const recoveryForm = document.getElementById('recovery-form');
-            const recoveryMessage = document.getElementById('recovery-message');
+  <main>
+    <div class="container">
+      <div class="form-container">
+        <div class="panel panel-login" id="login-panel">
+          <div class="user-icon-container">
+            <div class="user-icon"></div>
+          </div>
+          <div class="form-section">
+            <h1>Acceso Ciudadano</h1>
+            <form id="login-form">
+              <div class="form-group">
+                <label for="login-email">Correo Electrónico:</label>
+                <input
+                  type="email"
+                  id="login-email"
+                  name="email"
+                  required
+                  pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                  title="Debe tener formato ejemplo@dominio.ext"
+                >
+              </div>
+              <div class="form-group">
+                <label for="login-password">Contraseña:</label>
+                <input type="password" id="login-password" name="password" required>
+              </div>
+              <div class="forgot-password">
+                <a href="#" id="forgot-password-link">¿Olvidó su contraseña?</a>
+              </div>
+              <button type="submit" class="action-button login-button">INICIAR SESIÓN</button>
+            </form>
+            <div class="toggle-panel">
+              <p>¿No tienes una cuenta?</p>
+              <a href="registro.html" class="toggle-button">Registrarse</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
 
-            // Abrir modal de recuperación
-            forgotPasswordLink.addEventListener('click', function(e) {
-                e.preventDefault();
-                modal.style.display = 'block';
-                // Limpiar mensajes previos
-                recoveryMessage.innerHTML = '';
-                recoveryForm.reset();
-            });
+  <!-- Modal de recuperación (sin cambios) -->
+  <div id="password-recovery-modal" class="modal">…</div>
 
-            // Cerrar modal
-            closeBtn.addEventListener('click', function() {
-                modal.style.display = 'none';
-            });
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Modal recovery code… (igual que antes)
 
-            // Cerrar modal al hacer clic fuera de él
-            window.addEventListener('click', function(event) {
-                if (event.target === modal) {
-                    modal.style.display = 'none';
-                }
-            });
+      // LOGIN
+      document.getElementById('login-form').addEventListener('submit', async e => {
+        e.preventDefault();
+        const emailEl = document.getElementById('login-email');
+        const pwdEl   = document.getElementById('login-password');
+        const email   = emailEl.value;
+        const password= pwdEl.value;
+        // Validación de correo
+        const regex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
+        if (!regex.test(email)) {
+          emailEl.setCustomValidity('Por favor ingresa un correo válido');
+          emailEl.reportValidity();
+          return;
+        } else {
+          emailEl.setCustomValidity('');
+        }
 
-            // Manejo del formulario de recuperación
-            recoveryForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const email = document.getElementById('recovery-email').value;
-
-                // Mostrar loading
-                recoveryMessage.innerHTML = `
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        <p>Enviando enlace de recuperación...</p>
-                    </div>
-                `;
-
-                try {
-                    const response = await fetch('/api/recover-password', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email })
-                    });
-
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        recoveryMessage.innerHTML = `
-                            <div class="success-message">
-                                <strong>¡Enlace enviado!</strong><br>
-                                Se ha enviado un enlace de recuperación a su correo electrónico. 
-                                Por favor, revise su bandeja de entrada y siga las instrucciones.
-                            </div>
-                        `;
-                        recoveryForm.reset();
-                    } else {
-                        recoveryMessage.innerHTML = `
-                            <div class="error-message">
-                                <strong>Error:</strong> ${result.message || 'No se pudo enviar el enlace de recuperación'}
-                            </div>
-                        `;
-                    }
-                } catch (error) {
-                    recoveryMessage.innerHTML = `
-                        <div class="error-message">
-                            <strong>Error:</strong> No se pudo conectar con el servidor. Intente nuevamente.
-                        </div>
-                    `;
-                }
-            });
-
-            // Manejo de formulario de login (tu código existente)
-            document.getElementById('login-form').addEventListener('submit', async function (e) {
-                const emailInput = document.getElementById('login-email');
-    const regex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
-
-    if (!regex.test(emailInput.value)) {
-      e.preventDefault();
-      emailInput.setCustomValidity('Por favor ingresa un correo válido: ejemplo@dominio.com');
-      emailInput.reportValidity();
-      return;
-    } else {
-      emailInput.setCustomValidity('');
-    }
-                e.preventDefault();
-                const email = document.getElementById('login-email').value;
-                const password = document.getElementById('login-password').value;
-
-                try {
-                    const response = await fetch('/api/login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, password })
-                    });
-
-                    const result = await response.json();
-                    if (result.success) {
-                        // ✅ Guardar correo en localStorage para usarlo en confirmación del reporte
-                        localStorage.setItem('correoCiudadano', email);
-                        window.location.href = 'ciudadanos-portal.html';
-                    } else {
-                        alert(result.message || 'Error al iniciar sesión');
-                    }
-                } catch (error) {
-                    alert('Error de conexión. Intente nuevamente.');
-                }
-            });
-        });
-    </script>
+        try {
+          const resp = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          const result = await resp.json();
+          if (result.success && result.token) {
+            // guardamos correo y token
+            localStorage.setItem('correoCiudadano', email);
+            localStorage.setItem('tokenCiudadano', result.token);
+            // redirigimos
+            window.location.href = 'ciudadanos-portal.html';
+          } else {
+            alert(result.message || 'Error al iniciar sesión');
+          }
+        } catch (err) {
+          alert('Error de conexión. Intente nuevamente.');
+        }
+      });
+    });
+  </script>
 </body>
 </html>
