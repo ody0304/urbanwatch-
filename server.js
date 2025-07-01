@@ -11,6 +11,7 @@ const app  = express();
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
+
 console.log("Driver activo:", dbConfig.driver || 'default (tedious)');
 console.log("Conectando con config:", dbConfig);
 
@@ -143,13 +144,28 @@ async function crearTablas() {
 }
 crearTablas();
 
-// Registro con verificación por correo
-app.post('/api/registro', async (req, res) => {
+
+// Expresión regular: 8 caracteres, al menos 1 mayúscula, 1 dígito y 1 carácter especial
+const pwdRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8}$/;
+
+
+router.post('/api/registro', async (req, res) => {
   const { nombre, email, password } = req.body;
+
+  // 1) Validar formato de contraseña
+  if (!pwdRegex.test(password)) {
+    return res.status(400).json({
+      success: false,
+      message: 'La contraseña debe tener exactamente 8 caracteres, al menos una mayúscula, un número y un carácter especial.'
+    });
+  }
+
+  // 2) Generar token de verificación
   const token   = crypto.randomBytes(32).toString('hex');
-  const expires = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24h
+  const expires = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 horas
 
   try {
+    // 3) Conectar y guardar el usuario
     await sql.connect(dbConfig);
     await sql.query`
       INSERT INTO Ciudadanos 
@@ -158,7 +174,7 @@ app.post('/api/registro', async (req, res) => {
         (${nombre}, ${email}, ${password}, ${token}, ${expires})
     `;
 
-    // Construye URL de verificación correctamente
+    // 4) Enviar correo de verificación
     const verifyUrl = `${BASE_URL}/verify-email?token=${token}`;
     await transporter.sendMail({
       from:    '"UrbanWatch" <no-reply@urbanwatch.com>',
@@ -166,8 +182,7 @@ app.post('/api/registro', async (req, res) => {
       subject: 'Verifica tu correo en UrbanWatch',
       html: `
         <p>Hola ${nombre},</p>
-        <p>Estás registrándote en UrbanWatch. 
-           Haz clic en el siguiente enlace para verificar tu cuenta:</p>
+        <p>Gracias por registrarte en UrbanWatch. Haz clic en el siguiente enlace para verificar tu cuenta:</p>
         <p>
           <a href="${verifyUrl}"
              style="display:inline-block;padding:10px 20px;
@@ -176,10 +191,11 @@ app.post('/api/registro', async (req, res) => {
             Verificar correo
           </a>
         </p>
-        <p>Si no solicitaste esto, ignora este correo.</p>
+        <p>Si no solicitaste este registro, ignora este correo.</p>
       `
     });
 
+    // 5) Responder al cliente
     return res.status(200).json({
       success: true,
       message: 'Revisa tu correo para verificar tu cuenta.'
@@ -187,7 +203,7 @@ app.post('/api/registro', async (req, res) => {
 
   } catch (err) {
     console.error('Error en /api/registro:', err);
-    const isDup = err.number === 2627;
+    const isDup = err.number === 2627; // violación de clave única
     return res
       .status(isDup ? 400 : 500)
       .json({
@@ -198,6 +214,8 @@ app.post('/api/registro', async (req, res) => {
       });
   }
 });
+
+module.exports = router;
 
 // Verificación de correo
 app.get('/verify-email', async (req, res) => {
