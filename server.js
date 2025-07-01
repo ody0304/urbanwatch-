@@ -252,38 +252,67 @@ app.get('/verify-email', async (req, res) => {
 // Login (rechaza no verificados)
 // Login SIN comprobar verified
 app.post('/api/login', async (req, res) => {
-  const { email, password } = req.body;
+  console.log('📥 [POST /api/login] body:', req.body);
+
   try {
+    const { email, password } = req.body;
+
+    // 1) Conectar BD
+    console.log('🔗 Conectando a BD...');
     await sql.connect(dbConfig);
+    console.log('✅ Conectado a BD');
+
+    // 2) Ejecutar consulta
+    console.log(`🔎 Buscando usuario ${email}`);
     const result = await sql.query`
-      SELECT user_id, Nombre AS nombre, Correo AS correo
+      SELECT CiudadanoID AS id,
+             Nombre,
+             Correo,
+             Contrasena,
+             verified
       FROM Ciudadanos
-      WHERE Correo = ${email} AND Contrasena = ${password} AND verified = 1
+      WHERE Correo = ${email}
     `;
+    console.log('📊 Resultado consulta:', result.recordset);
+
+    // 3) Validaciones
     if (!result.recordset.length) {
-      return res.status(401).json({ success: false, message: 'Credenciales inválidas' });
+      console.log('❌ Usuario no encontrado');
+      return res.status(401).json({ success: false, message: 'Credenciales inválidas.' });
     }
-    // Genera token (por ejemplo JWT)
+    const user = result.recordset[0];
+
+    if (!user.verified) {
+      console.log('❌ Cuenta no verificada');
+      return res.status(403).json({ success: false, message: 'Cuenta no verificada.' });
+    }
+
+    if (user.Contrasena !== password) {
+      console.log('❌ Contraseña incorrecta');
+      return res.status(401).json({ success: false, message: 'Credenciales inválidas.' });
+    }
+
+    // 4) Generar token
+    console.log('🔐 Generando JWT');
     const token = jwt.sign(
-      { id: result.recordset[0].user_id, email },
+      { id: user.id, email },
       process.env.JWT_SECRET,
       { expiresIn: '2h' }
     );
+    console.log('✅ JWT generado');
+
+    // 5) Devolver éxito
     return res.json({
       success: true,
       token,
-      user: {
-        nombre: result.recordset[0].nombre,
-        correo: result.recordset[0].correo
-      }
+      user: { nombre: user.Nombre, correo: user.Correo }
     });
+
   } catch (err) {
-    console.error('Error en POST /api/login:', err);
+    console.error('❌ Error en POST /api/login:', err);
     return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 });
-
-
 
 // Arranque del servidor
 app.listen(PORT, () => {
