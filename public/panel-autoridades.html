@@ -1,373 +1,325 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URBANWATCH - Panel de Autoridades</title>
-    <link rel="stylesheet" href="panel-autoridades-style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>URBANWATCH - Panel de Autoridades</title>
+  <link rel="stylesheet" href="panel-autoridades-style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <header>
-        <div class="logo">
-            <div class="logo-circle"></div>
-            <div class="logo-text-container">
-                <div class="logo-text" id="urbanwatch-title">URBANWATCH</div>
-            </div>
-        </div>
-        <div class="user-info">
-            <span id="empleado-info">Cargando...</span>
-            <button class="logout-btn" onclick="logout()">
-                <i class="fas fa-sign-out-alt"></i> Salir
-            </button>
-        </div>
-    </header>
+  <header>
+    <div class="logo">
+      <div class="logo-circle"></div>
+      <div class="logo-text-container">
+        <div class="logo-text" id="urbanwatch-title">URBANWATCH</div>
+      </div>
+    </div>
+    <div class="user-info">
+      <span id="empleado-info">Cargando...</span>
+      <button class="logout-btn" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> Salir
+      </button>
+    </div>
+  </header>
 
-    <div class="subheader">
-        <h2>Panel de Reportes - <span id="dependencia-name"></span></h2>
+  <div class="subheader">
+    <h2>Panel de Reportes – <span id="dependencia-name"></span></h2>
+  </div>
+
+  <main>
+    <div class="stats-container">
+      <div class="stat-card new">
+        <div class="stat-number" id="stat-nuevos">0</div>
+        <div class="stat-label">NUEVOS</div>
+      </div>
+      <div class="stat-card in-progress">
+        <div class="stat-number" id="stat-proceso">0</div>
+        <div class="stat-label">EN<br>PROCESO</div>
+      </div>
+      <div class="stat-card closed">
+        <div class="stat-number" id="stat-cerrados">0</div>
+        <div class="stat-label">CERRADOS</div>
+      </div>
+      <div class="stat-card total">
+        <div class="stat-number" id="stat-total">0</div>
+        <div class="stat-label">TOTAL</div>
+      </div>
     </div>
 
-    <main>
-        <div class="stats-container">
-            <div class="stat-card new">
-                <div class="stat-number" id="stat-nuevos">0</div>
-                <div class="stat-label">NUEVOS</div>
-            </div>
-
-            <div class="stat-card in-progress">
-                <div class="stat-number" id="stat-proceso">0</div>
-                <div class="stat-label">EN<br>PROCESO</div>
-            </div>
-
-            <div class="stat-card closed">
-                <div class="stat-number" id="stat-cerrados">0</div>
-                <div class="stat-label">CERRADOS</div>
-            </div>
-
-            <div class="stat-card total">
-                <div class="stat-number" id="stat-total">0</div>
-                <div class="stat-label">TOTAL</div>
-            </div>
+    <div class="filters-container">
+      <div class="filter-dropdown">
+        <button class="dropdown-button" id="filtro-estado" data-estado="todos">
+          Todos los Estados <span class="arrow-down">▼</span>
+        </button>
+        <div class="dropdown-content">
+          <a href="#" onclick="filtrarPorEstado('todos')">Todos</a>
+          <a href="#" onclick="filtrarPorEstado('recibido')">Recibidos</a>
+          <a href="#" onclick="filtrarPorEstado('proceso')">En Proceso</a>
+          <a href="#" onclick="filtrarPorEstado('verificado')">Verificados</a>
+          <a href="#" onclick="filtrarPorEstado('reparado')">Reparados</a>
         </div>
-
-        <div class="filters-container">
-            <div class="filter-dropdown">
-                <button class="dropdown-button" id="filtro-estado" data-estado="todos">
-                    Todos los Estados <span class="arrow-down">▼</span>
-                </button>
-                <div class="dropdown-content">
-                    <a href="#" onclick="filtrarPorEstado('todos')">Todos</a>
-                    <a href="#" onclick="filtrarPorEstado('recibido')">Recibidos</a>
-                    <a href="#" onclick="filtrarPorEstado('proceso')">En Proceso</a>
-                    <a href="#" onclick="filtrarPorEstado('verificado')">Verificados</a>
-                    <a href="#" onclick="filtrarPorEstado('reparado')">Reparados</a>
-                </div>
-            </div>
-
-            <div class="filter-dropdown">
-                <button class="dropdown-button" id="filtro-urgencia" data-urgencia="todas">
-                    Todas las Urgencias <span class="arrow-down">▼</span>
-                </button>
-                <div class="dropdown-content">
-                    <a href="#" onclick="filtrarPorUrgencia('todas')">Todas</a>
-                    <a href="#" onclick="filtrarPorUrgencia('alta')">Alta</a>
-                    <a href="#" onclick="filtrarPorUrgencia('media')">Media</a>
-                    <a href="#" onclick="filtrarPorUrgencia('baja')">Baja</a>
-                    <a href="#" onclick="filtrarPorUrgencia('critico')">Crítico</a>
-                </div>
-            </div>
+      </div>
+      <div class="filter-dropdown">
+        <button class="dropdown-button" id="filtro-urgencia" data-urgencia="todas">
+          Todas las Urgencias <span class="arrow-down">▼</span>
+        </button>
+        <div class="dropdown-content">
+          <a href="#" onclick="filtrarPorUrgencia('todas')">Todas</a>
+          <a href="#" onclick="filtrarPorUrgencia('alta')">Alta</a>
+          <a href="#" onclick="filtrarPorUrgencia('media')">Media</a>
+          <a href="#" onclick="filtrarPorUrgencia('baja')">Baja</a>
+          <a href="#" onclick="filtrarPorUrgencia('critico')">Crítico</a>
         </div>
+      </div>
+    </div>
 
-        <div class="reports-table">
-            <div class="table-header">
-                <div class="table-cell">ID</div>
-                <div class="table-cell">Título</div>
-                <div class="table-cell">Ubicación</div>
-                <div class="table-cell">Urgencia</div>
-                <div class="table-cell">Fecha</div>
-                <div class="table-cell">Ciudadano</div>
-                <div class="table-cell">Detalle</div>
-                <div class="table-cell actions">Estado y Acciones</div>
-            </div>
-
-            <div class="table-body" id="reportes-container">
-                <div class="loading">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <p>Cargando reportes...</p>
-                </div>
-            </div>
+    <div class="reports-table">
+      <div class="table-header">
+        <div class="table-cell">ID</div>
+        <div class="table-cell">Título</div>
+        <div class="table-cell">Ubicación</div>
+        <div class="table-cell">Urgencia</div>
+        <div class="table-cell">Fecha</div>
+        <div class="table-cell">Ciudadano</div>
+        <div class="table-cell">Detalle</div>
+        <div class="table-cell actions">Estado y Acciones</div>
+      </div>
+      <div class="table-body" id="reportes-container">
+        <div class="loading">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Cargando reportes...</p>
         </div>
-    </main>
+      </div>
+    </div>
+  </main>
 
-    <script>
-        let empleadoActual = null;
-        let reportes = [];
-        let reportesFiltrados = [];
+  <script>
+    let reportes = [];
+    let reportesFiltrados = [];
+    let usuarioActual = null;
+    let esSupervisor  = false;
 
-        document.addEventListener('DOMContentLoaded', function () {
-            verificarAutenticacion();
-        });
+    document.addEventListener('DOMContentLoaded', verificarAutenticacion);
 
-        function verificarAutenticacion() {
-            empleadoActual = JSON.parse(localStorage.getItem('empleadoData'));
-
-            if (!empleadoActual) {
-                alert('Debe iniciar sesión como empleado');
-                window.location.href = 'login-empleado.html';
-                return;
-            }
-
-            document.getElementById('empleado-info').textContent = 
-                `${empleadoActual.Nombre} (${empleadoActual.Departamento})`;
-            document.getElementById('dependencia-name').textContent = 
-                empleadoActual.Departamento;
-
-            cargarReportes();
+    function verificarAutenticacion() {
+      // ¿Supervisor?
+      const sup = sessionStorage.getItem('supervisor');
+      if (sup) {
+        usuarioActual = JSON.parse(sup);
+        esSupervisor  = true;
+      } else {
+        // Empleado normal
+        const emp = localStorage.getItem('empleadoData');
+        if (!emp) {
+          alert('Debe iniciar sesión');
+          window.location.href = 'login-empleado.html';
+          return;
         }
+        usuarioActual = JSON.parse(emp);
+      }
 
-async function cargarReportes() {
-  try {
-    // 1) Mapeo de nombre a código
-    const depto = empleadoActual.Departamento.toLowerCase();
-    let categoriaCode;
-    switch (depto) {
-      case 'baches y calles':
-        categoriaCode = 'baches';
-        break;
-      case 'agua':
-        categoriaCode = 'agua';
-        break;
-      case 'basura y limpieza':
-        categoriaCode = 'basura';
-        break;
-      case 'alumbrado público':
-        categoriaCode = 'alumbrado';
-        break;
-      default:
-        throw new Error(`Departamento desconocido: ${empleadoActual.Departamento}`);
+      // Mostrar info
+      const nombre = usuarioActual.Nombre;
+      const dep    = usuarioActual.Dependencia || usuarioActual.Departamento;
+      document.getElementById('empleado-info').textContent =
+        esSupervisor
+          ? `Supervisor ${nombre} (${dep})`
+          : `${nombre} (${dep})`;
+      document.getElementById('dependencia-name').textContent = dep;
+
+      cargarReportes();
     }
 
-    // 2) Llamada correcta al API
-    const response = await fetch(`/api/reportes-empleado/${categoriaCode}`);
-    if (!response.ok) throw new Error('Error al cargar reportes');
+    async function cargarReportes() {
+      try {
+        // código de dependencia: sin espacios, minúscula
+        const dep = (usuarioActual.Dependencia || usuarioActual.Departamento)
+                      .toLowerCase().replace(/\s+/g, '');
+        const url = esSupervisor
+          ? `/api/reportes-supervisor/${dep}`
+          : `/api/reportes-empleado/${dep}`;
 
-    reportes = await response.json();
-    reportesFiltrados = [...reportes];
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Error al cargar reportes');
+        reportes = await res.json();
+        reportesFiltrados = [...reportes];
 
-    mostrarReportes();
-    actualizarEstadisticas();
+        mostrarReportes();
+        actualizarEstadisticas();
+      } catch (err) {
+        console.error(err);
+        document.getElementById('reportes-container').innerHTML = `
+          <div class="error">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Error al cargar los reportes</p>
+          </div>`;
+      }
+    }
 
-  } catch (error) {
-    console.error('Error en cargarReportes():', error);
-    document.getElementById('reportes-container').innerHTML = `
-      <div class="error">
-        <i class="fas fa-exclamation-triangle"></i>
-        <p>Error al cargar los reportes</p>
-      </div>
-    `;
-  }
-}
+    function filtrarPorEstado(estado) {
+      const nombres = {
+        'recibido': 'Recibidos',
+        'proceso': 'En Proceso',
+        'verificado': 'Verificados',
+        'reparado': 'Reparados',
+        'todos': 'Todos los Estados'
+      };
+      const btn = document.getElementById('filtro-estado');
+      btn.setAttribute('data-estado', estado);
+      btn.innerHTML = `${nombres[estado]} <span class="arrow-down">▼</span>`;
+      aplicarFiltrosCombinados();
+      cerrarDropdowns();
+    }
 
+    function filtrarPorUrgencia(urgencia) {
+      const nombres = { 'alta':'Alta','media':'Media','baja':'Baja','critico':'Crítico','todas':'Todas' };
+      const sinonimos = { 'alto':'alta','medio':'media','bajo':'baja','crítico':'critico' };
+      const btn = document.getElementById('filtro-urgencia');
+      btn.setAttribute('data-urgencia', urgencia);
+      btn.innerHTML = `Urgencia ${nombres[urgencia]} <span class="arrow-down">▼</span>`;
+      aplicarFiltrosCombinados(sinonimos);
+      cerrarDropdowns();
+    }
 
-        function filtrarPorEstado(estado) {
-            const nombres = {
-                'recibido': 'Recibidos',
-                'proceso': 'En Proceso',
-                'verificado': 'Verificados',
-                'reparado': 'Reparados',
-                'todos': 'Todos los Estados'
-            };
+    function aplicarFiltrosCombinados(sinonimos={}) {
+      const estado  = document.getElementById('filtro-estado').dataset.estado || 'todos';
+      const urgencia= document.getElementById('filtro-urgencia').dataset.urgencia || 'todas';
+      reportesFiltrados = reportes.filter(r => {
+        const est = (r.EstadoActual||'recibido').toLowerCase();
+        const urg = (r.Urgencia||'').toLowerCase();
+        const urgNorm = sinonimos[urg]||urg;
+        return (estado==='todos'||est===estado) && (urgencia==='todas'||urgNorm===urgencia);
+      });
+      mostrarReportes();
+    }
 
-            document.getElementById('filtro-estado').setAttribute('data-estado', estado);
-            document.getElementById('filtro-estado').innerHTML = `${nombres[estado]} <span class="arrow-down">▼</span>`;
-            aplicarFiltrosCombinados();
-            cerrarDropdowns();
-        }
+    function mostrarReportes() {
+      const container = document.getElementById('reportes-container');
+      if (reportesFiltrados.length===0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <p>No hay reportes disponibles</p>
+          </div>`;
+        return;
+      }
 
-        function filtrarPorUrgencia(urgencia) {
-            const nombres = {
-                'alta': 'Alta',
-                'media': 'Media',
-                'baja': 'Baja',
-                'critica': 'Crítica',
-                'todas': 'Todas'
-            };
+      // Ocultar cabecera de acciones si es supervisor
+      document.querySelector('.table-header .actions')
+              .style.display = esSupervisor ? 'none' : 'block';
 
-            const sinonimos = {
-                'alto': 'alta',
-                'alta': 'alta',
-                'media': 'media',
-                'medio': 'media',
-                'baja': 'baja',
-                'bajo': 'baja',
-                'crítico': 'critico',
-                'critico': 'critico'
-            };
+      container.innerHTML = reportesFiltrados.map(r => {
+        const est  = (r.EstadoActual||'recibido').toLowerCase();
+        const urg  = (r.Urgencia||'').toLowerCase();
+        const dep  = r.Dependencia || '';
+        const acciones = esSupervisor ? '' : `
+          <div class="table-cell actions">
+            <select class="estado-select" data-reporte-id="${r.IdReporte}">
+              <option value="recibido"   ${est==='recibido'   ? 'selected':''}>Recibido</option>
+              <option value="proceso"    ${est==='proceso'    ? 'selected':''}>En Proceso</option>
+              <option value="verificado" ${est==='verificado'? 'selected':''}>Verificado</option>
+              <option value="reparado"   ${est==='reparado'   ? 'selected':''}>Reparado</option>
+            </select>
+            <button class="confirmar-btn" onclick="actualizarEstado(${r.IdReporte})">
+              Actualizar
+            </button>
+          </div>`;
 
-            document.getElementById('filtro-urgencia').setAttribute('data-urgencia', urgencia);
-            document.getElementById('filtro-urgencia').innerHTML = `Urgencia ${nombres[urgencia]} <span class="arrow-down">▼</span>`;
-            aplicarFiltrosCombinados(sinonimos);
-            cerrarDropdowns();
-        }
+        return `
+          <div class="table-row estado-${est}">
+            <div class="table-cell">${r.IdReporte}</div>
+            <div class="table-cell">${r.Titulo}</div>
+            <div class="table-cell">${r.Direccion}</div>
+            <div class="table-cell">
+              <span class="urgencia-badge urgencia-${urg}">
+                ${r.Urgencia}
+              </span>
+            </div>
+            <div class="table-cell">${formatearFecha(r.FechaCreacion)}</div>
+            <div class="table-cell">
+              ${r.EsAnonimo?'<em>Anónimo</em>':r.CorreoCiudadano}
+            </div>
+            <div class="table-cell">
+              <button class="detalle-btn"
+                      onclick="window.location.href='detalle-reporte.html?id=${r.IdReporte}'">
+                Ver Detalle
+              </button>
+            </div>
+            ${acciones}
+          </div>`;
+      }).join('');
+    }
 
-        function aplicarFiltrosCombinados(sinonimos = {}) {
-            const estado = document.getElementById('filtro-estado').getAttribute('data-estado') || 'todos';
-            const urgencia = document.getElementById('filtro-urgencia').getAttribute('data-urgencia') || 'todas';
+    async function actualizarEstado(idReporte) {
+      if (esSupervisor) return;  // Supervisores no pueden actualizar
 
-            reportesFiltrados = reportes.filter(r => {
-                const estadoActual = (r.EstadoActual || 'recibido').toLowerCase();
-                const urgenciaActualOriginal = (r.Urgencia || '').toLowerCase();
-                const urgenciaActual = sinonimos[urgenciaActualOriginal] || urgenciaActualOriginal;
-
-                const coincideEstado = estado === 'todos' || estadoActual === estado;
-                const coincideUrgencia = urgencia === 'todas' || urgenciaActual === urgencia;
-
-                return coincideEstado && coincideUrgencia;
-            });
-
-            mostrarReportes();
-        }
-
-function mostrarReportes() {
-  const container = document.getElementById('reportes-container');
-
-  if (reportesFiltrados.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-message">
-          <i class="fas fa-inbox"></i>
-          <p>No hay reportes disponibles</p>
-        </div>
-      </div>
-    `;
-    return;
-  }
-
-  container.innerHTML = reportesFiltrados.map(reporte => {
-    const estadoActual = (reporte.EstadoActual || 'recibido').toLowerCase();
-    const urgencia       = (reporte.Urgencia || '').toLowerCase();
-
-    return `
-      <div class="table-row estado-${estadoActual}">
-        <div class="table-cell">${reporte.IdReporte}</div>
-        <div class="table-cell">${reporte.Titulo}</div>
-        <div class="table-cell">${reporte.Direccion}</div>
-        <div class="table-cell">
-          <span class="urgencia-badge urgencia-${urgencia}">
-            ${reporte.Urgencia}
-          </span>
-        </div>
-        <div class="table-cell">${formatearFecha(reporte.FechaCreacion)}</div>
-        <div class="table-cell">
-          ${ reporte.EsAnonimo 
-             ? '<em>Anónimo</em>' 
-             : reporte.CorreoCiudadano }
-        </div>
-
-        <!-- Nueva columna “Detalle” -->
-        <div class="table-cell">
-          <button
-            class="detalle-btn"
-            onclick="window.location.href='detalle-reporte.html?id=${reporte.IdReporte}'"
-          >
-            Ver Detalle
-          </button>
-        </div>
-
-        <!-- Acciones de estado -->
-        <div class="table-cell actions">
-          <select class="estado-select" data-reporte-id="${reporte.IdReporte}">
-            <option value="recibido"   ${estadoActual === 'recibido' ? 'selected' : ''}>Recibido</option>
-            <option value="proceso"    ${estadoActual === 'proceso'  ? 'selected' : ''}>En Proceso</option>
-            <option value="verificado" ${estadoActual === 'verificado'? 'selected' : ''}>Verificado</option>
-            <option value="reparado"   ${estadoActual === 'reparado' ? 'selected' : ''}>Reparado</option>
-          </select>
-          <button class="confirmar-btn" onclick="actualizarEstado(${reporte.IdReporte})">
-            Actualizar
-          </button>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-
-
-        async function actualizarEstado(idReporte) {
-            const select = document.querySelector(`select[data-reporte-id="${idReporte}"]`);
-            const nuevoEstado = select.value;
-
-            try {
-                const response = await fetch('/api/actualizar-estado-reporte', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        idReporte: idReporte,
-                        estado: nuevoEstado,
-                        empleadoId: empleadoActual.IdEmpleado
-                    })
-                });
-
-                if (response.ok) {
-                    const reporte = reportes.find(r => r.IdReporte === idReporte);
-                    if (reporte) reporte.EstadoActual = nuevoEstado;
-
-                    actualizarEstadisticas();
-                    aplicarFiltrosCombinados();
-                    alert('Estado actualizado correctamente');
-                } else {
-                    throw new Error('Error al actualizar el estado');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error al actualizar el estado');
-            }
-        }
-
-        function actualizarEstadisticas() {
-            const stats = {
-                nuevos: reportes.filter(r => !r.EstadoActual || r.EstadoActual === 'recibido').length,
-                proceso: reportes.filter(r => r.EstadoActual === 'proceso' || r.EstadoActual === 'verificado').length,
-                cerrados: reportes.filter(r => r.EstadoActual === 'reparado').length,
-                total: reportes.length
-            };
-
-            document.getElementById('stat-nuevos').textContent = stats.nuevos;
-            document.getElementById('stat-proceso').textContent = stats.proceso;
-            document.getElementById('stat-cerrados').textContent = stats.cerrados;
-            document.getElementById('stat-total').textContent = stats.total;
-        }
-
-        function formatearFecha(fecha) {
-            return new Date(fecha).toLocaleDateString('es-ES', {
-                day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-            });
-        }
-
-        function logout() {
-            localStorage.removeItem('empleadoData');
-            window.location.href = 'login-empleado.html';
-        }
-
-        function cerrarDropdowns() {
-            document.querySelectorAll('.dropdown-content').forEach(d => d.style.display = 'none');
-        }
-
-        document.querySelectorAll('.dropdown-button').forEach(button => {
-            button.addEventListener('click', function () {
-                const content = this.nextElementSibling;
-                const isVisible = content.style.display === 'block';
-                cerrarDropdowns();
-                if (!isVisible) content.style.display = 'block';
-            });
+      const select = document.querySelector(`.estado-select[data-reporte-id="${idReporte}"]`);
+      const nuevo  = select.value;
+      try {
+        const res = await fetch('/api/actualizar-estado-reporte', {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json' },
+          body: JSON.stringify({
+            idReporte,
+            estado: nuevo,
+            empleadoId: usuarioActual.IdEmpleado
+          })
         });
+        if (!res.ok) throw new Error();
+        // actualizar local
+        const rep = reportes.find(x=>x.IdReporte===idReporte);
+        if (rep) rep.EstadoActual = nuevo;
+        actualizarEstadisticas();
+        aplicarFiltrosCombinados();
+        alert('Estado actualizado correctamente');
+      } catch {
+        alert('Error al actualizar el estado');
+      }
+    }
 
-        window.addEventListener('click', function (e) {
-            if (!e.target.matches('.dropdown-button') && !e.target.matches('.arrow-down')) {
-                cerrarDropdowns();
-            }
-        });
-    </script>
+    function actualizarEstadisticas() {
+      const stats = {
+        nuevos: reportes.filter(r=>!r.EstadoActual||r.EstadoActual==='recibido').length,
+        proceso: reportes.filter(r=>r.EstadoActual==='proceso'||r.EstadoActual==='verificado').length,
+        cerrados: reportes.filter(r=>r.EstadoActual==='reparado').length,
+        total: reportes.length
+      };
+      document.getElementById('stat-nuevos').textContent   = stats.nuevos;
+      document.getElementById('stat-proceso').textContent = stats.proceso;
+      document.getElementById('stat-cerrados').textContent= stats.cerrados;
+      document.getElementById('stat-total').textContent   = stats.total;
+    }
+
+    function formatearFecha(fecha) {
+      return new Date(fecha).toLocaleDateString('es-ES', {
+        day:'2-digit', month:'2-digit', year:'numeric',
+        hour:'2-digit', minute:'2-digit'
+      });
+    }
+
+    function logout() {
+      sessionStorage.removeItem('supervisor');
+      localStorage.removeItem('empleadoData');
+      window.location.href = esSupervisor ? 'login-supervisor.html' : 'login-empleado.html';
+    }
+
+    function cerrarDropdowns() {
+      document.querySelectorAll('.dropdown-content').forEach(d=>d.style.display='none');
+    }
+    document.querySelectorAll('.dropdown-button').forEach(btn=>{
+      btn.addEventListener('click', e=>{
+        const c = btn.nextElementSibling;
+        const v = c.style.display==='block';
+        cerrarDropdowns();
+        if (!v) c.style.display='block';
+      });
+    });
+    window.addEventListener('click', e=>{
+      if (!e.target.matches('.dropdown-button') && !e.target.matches('.arrow-down')) {
+        cerrarDropdowns();
+      }
+    });
+  </script>
 </body>
 </html>
-
