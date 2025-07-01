@@ -253,30 +253,27 @@ app.get('/verify-email', async (req, res) => {
 // Login SIN comprobar verified
 app.post('/api/login', async (req, res) => {
   console.log('📥 [POST /api/login] body:', req.body);
-
   try {
     const { email, password } = req.body;
 
-    // 1) Conectar BD
     console.log('🔗 Conectando a BD...');
     await sql.connect(dbConfig);
     console.log('✅ Conectado a BD');
 
-    // 2) Ejecutar consulta
     console.log(`🔎 Buscando usuario ${email}`);
     const result = await sql.query`
-      SELECT CiudadanoID AS id,
-             Nombre,
-             Correo,
-             Contrasena,
-             verified
+      SELECT 
+        Id,          -- tu PK
+        Nombre,
+        Correo,
+        Contrasena,
+        verified
       FROM Ciudadanos
       WHERE Correo = ${email}
     `;
     console.log('📊 Resultado consulta:', result.recordset);
 
-    // 3) Validaciones
-    if (!result.recordset.length) {
+    if (result.recordset.length === 0) {
       console.log('❌ Usuario no encontrado');
       return res.status(401).json({ success: false, message: 'Credenciales inválidas.' });
     }
@@ -292,20 +289,22 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ success: false, message: 'Credenciales inválidas.' });
     }
 
-    // 4) Generar token
     console.log('🔐 Generando JWT');
     const token = jwt.sign(
-      { id: user.id, email },
+      { id: user.Id, email: user.Correo },
       process.env.JWT_SECRET,
       { expiresIn: '2h' }
     );
     console.log('✅ JWT generado');
 
-    // 5) Devolver éxito
     return res.json({
       success: true,
       token,
-      user: { nombre: user.Nombre, correo: user.Correo }
+      user: {
+        id:     user.Id,
+        nombre: user.Nombre,
+        correo: user.Correo
+      }
     });
 
   } catch (err) {
