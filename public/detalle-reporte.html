@@ -70,7 +70,7 @@
     }
 
     try {
-      // 1) Carga de datos en paralelo
+      // 1) Carga simultánea de datos
       const [reporteRes, estadosRes, comentariosRes] = await Promise.all([
         fetch(`/api/reporte-info/${id}`),
         fetch(`/api/estado-reporte/${id}`),
@@ -83,22 +83,17 @@
         return;
       }
 
-      // 2) Parseo de JSON
       const reporte   = await reporteRes.json();
       const estados   = await estadosRes.json();
       let comentarios = await comentariosRes.json();
 
-      // 3) Detecta roles desde localStorage
+      // 2) Detecta rol/usuario autenticado
       const empleadoData    = localStorage.getItem('empleadoData');
       const correoCiudadano = localStorage.getItem('correoCiudadano');
       const correoAutor     = reporte.CorreoCiudadano;
       const anonimatoActivo = reporte.EsAnonimo === 1;
 
-      // **DEBUG**: verifica que estás leyendo bien del localStorage
-      console.log('DEBUG ▶ empleadoData:', empleadoData);
-      console.log('DEBUG ▶ correoCiudadano:', correoCiudadano);
-
-      // 4) Renderiza encabezado e info general
+      // 3) Renderiza encabezado e info
       document.getElementById('reporte-id').textContent      = `Reporte #${id}`;
       document.getElementById('reporte-titulo').textContent = reporte.Titulo || 'Sin título';
       document.getElementById('info-detalle').innerHTML = `
@@ -109,7 +104,7 @@
         </span>
       `;
 
-      // 5) Renderiza imagen si existe
+      // 4) Imagen si existe
       const imgTag = document.getElementById('reporte-img');
       if (reporte.Imagen1?.startsWith('data:image')) {
         imgTag.src = reporte.Imagen1;
@@ -117,10 +112,10 @@
         imgTag.style.display = 'none';
       }
 
-      // 6) Renderiza timeline
+      // 5) Renderiza timeline
       const tlc = document.getElementById('timeline-container');
       tlc.innerHTML = '';
-      estados.forEach((e, i) => {
+      estados.forEach((e,i) => {
         const cls = i === estados.length - 1 ? 'actual' : 'completo';
         tlc.innerHTML += `
           <div class="timeline-item ${cls}">
@@ -132,7 +127,7 @@
           </div>`;
       });
 
-      // 7) Renderiza comentarios existentes
+      // 6) Renderiza comentarios existentes
       const lista = document.getElementById('comentarios-lista');
       function renderComentarios(arr) {
         lista.innerHTML = arr.map(c => {
@@ -158,17 +153,19 @@
       }
       renderComentarios(comentarios);
 
-      // 8) Control del botón “Añadir Comentario”
+      // ------------------- CONTROL DE COMENTARIOS -------------------
       const btn  = document.getElementById('btn-comentario');
       const info = document.querySelector('.comentario-info');
 
+      console.log('STORE ▶ correoCiudadano=', correoCiudadano, 'empleadoData=', empleadoData);
+
       if (empleadoData) {
-        // Si es empleado → ocultar sección de comentarios
+        // Empleado: ocultar sección de comentarios completa
         btn.style.display  = 'none';
         info.style.display = 'none';
 
       } else if (correoCiudadano) {
-        // Si es ciudadano autenticado → mostrar y habilitar
+        // Ciudadano autenticado: mostrar y habilitar
         btn.style.display  = 'inline-block';
         info.style.display = 'block';
         btn.addEventListener('click', async () => {
@@ -176,7 +173,7 @@
           if (!texto) return;
           const resp = await fetch('/api/comentarios', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {'Content-Type':'application/json'},
             body: JSON.stringify({
               idReporte: id,
               correoCiudadano,
@@ -196,11 +193,11 @@
         });
 
       } else {
-        // Si no hay sesión → ocultar y redirigir al login
+        // No autenticado: ocultar y forzar login
         btn.style.display  = 'none';
         info.style.display = 'none';
         alert('Debes iniciar sesión para ver y añadir comentarios.');
-        location.href = 'login-ciudadano.html';
+        window.location.href = 'login-ciudadano.html';
       }
 
     } catch (err) {
@@ -212,3 +209,4 @@
   </script>
 </body>
 </html>
+
