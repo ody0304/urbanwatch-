@@ -10,22 +10,6 @@
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <style>
-    /* --- Flex container para mapa + sidebar --- */
-    main { display: flex; gap: 2rem; }
-    .report-container { flex: 1; }
-    .progress-sidebar { width: 200px; }
-    .progress-steps .step {
-      display: flex; align-items: center; margin-bottom: 1rem;
-    }
-    .progress-steps .step-number {
-      width: 32px; height: 32px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      background: #ddd; margin-right: .5rem;
-    }
-    .progress-steps .step.completed .step-number { background: #2C7A7B; color: white; }
-    .progress-steps .step.active .step-number { background: #2C7A7B; color: white; }
-  </style>
 </head>
 <body>
   <header>
@@ -40,12 +24,12 @@
   </div>
 
   <main>
-    <!-- ======= panel principal ======= -->
+    <!-- Panel principal -->
     <div class="report-container">
       <h2>Ubicación del problema</h2>
       <p class="subtitle">Seleccione en el mapa o ingrese manualmente</p>
 
-      <div id="map" style="height: 400px; border-radius: 8px; margin-bottom: 1em;"></div>
+      <div id="map" class="map-container"></div>
       <p>Dirección seleccionada: <span id="direccion-resultado">Ninguna</span></p>
 
       <div class="address-input">
@@ -60,7 +44,7 @@
         </div>
       </div>
 
-      <div class="navigation-buttons" style="margin-top: 1.5rem;">
+      <div class="navigation-buttons">
         <a href="reportar.html" class="nav-button prev-button">
           <i class="fas fa-arrow-left"></i> Anterior
         </a>
@@ -70,11 +54,11 @@
       </div>
     </div>
 
-    <!-- ======= barra lateral de progreso ======= -->
+    <!-- Barra lateral de progreso -->
     <aside class="progress-sidebar">
       <div class="progress-steps">
         <div class="step completed">
-          <div class="step-number"><i class="fas fa-check"></i></div>
+          <div class="step-number"><span class="checkmark">✓</span></div>
           <div class="step-label">Categoría</div>
         </div>
         <div class="step active">
@@ -98,13 +82,14 @@
   </main>
 
   <script>
-    const sanJoseBounds = [[22.98, -109.82], [23.14, -109.58]];
+    // Límites para San José del Cabo
+    const bounds = [[22.98, -109.82], [23.14, -109.58]];
     const map = L.map('map', {
-      maxBounds: sanJoseBounds,
+      maxBounds: bounds,
       maxBoundsViscosity: 0.7,
       minZoom: 12,
       maxZoom: 16
-    }).fitBounds(sanJoseBounds);
+    }).fitBounds(bounds);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
@@ -112,59 +97,53 @@
     }).addTo(map);
 
     let marker = null;
-    const direccionResultadoEl = document.getElementById('direccion-resultado');
-    const inputDireccion = document.getElementById('direccion');
-    const nextButton = document.getElementById('next-button');
+    const direccionResultado = document.getElementById('direccion-resultado');
+    const inputDireccion     = document.getElementById('direccion');
+    const btnSiguiente       = document.getElementById('next-button');
 
-    async function setDireccion(lat, lng, textoManual = null) {
-      let dir;
-      if (textoManual) {
-        dir = textoManual;
-      } else {
+    // Coloca marcador y obtiene texto inverso
+    map.on('click', async e => {
+      const { lat, lng } = e.latlng;
+      // Colocar o mover marcador
+      if (!marker) marker = L.marker([lat,lng]).addTo(map);
+      else marker.setLatLng([lat,lng]);
+
+      // Obtener dirección
+      try {
         const res = await fetch(
           `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
         );
         const data = await res.json();
-        dir = data.display_name || '';
-        if (!/road|street|avenue|calle|camino/i.test(dir)) {
-          alert('Por favor seleccione un punto en tierra firme.');
-          return false;
-        }
-      }
-      localStorage.setItem('direccionProblema', dir);
-      direccionResultadoEl.textContent = dir;
-      inputDireccion.value = dir;
-      nextButton.disabled = false;
-      return true;
-    }
-
-    map.on('click', async e => {
-      const ok = await setDireccion(e.latlng.lat, e.latlng.lng);
-      if (ok) {
-        if (!marker) {
-          marker = L.marker(e.latlng).addTo(map);
-        } else {
-          marker.setLatLng(e.latlng);
-        }
+        const dir  = data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        aplicarDireccion(dir);
+      } catch {
+        alert('No se pudo obtener la dirección.');
       }
     });
 
+    // Al escribir manualmente
     inputDireccion.addEventListener('input', () => {
       const text = inputDireccion.value.trim();
-      nextButton.disabled = !text;
-      direccionResultadoEl.textContent = text || 'Ninguna';
-      if (text) localStorage.setItem('direccionProblema', text);
+      aplicarDireccion(text);
     });
 
-    nextButton.addEventListener('click', () => {
-      const dir = inputDireccion.value.trim();
-      if (!dir) {
-        alert('Debes seleccionar o escribir una dirección antes de continuar.');
-        return;
+    function aplicarDireccion(dir) {
+      direccionResultado.textContent = dir || 'Ninguna';
+      inputDireccion.value          = dir;
+      btnSiguiente.disabled         = !dir;
+      if (dir) localStorage.setItem('direccionProblema', dir);
+    }
+
+    // Avanzar
+    btnSiguiente.addEventListener('click', () => {
+      if (!inputDireccion.value.trim()) {
+        alert('Seleccione o escriba una dirección para continuar.');
+      } else {
+        window.location.href = 'detalles.html';
       }
-      window.location.href = 'detalles.html';
     });
   </script>
 </body>
 </html>
+
 
