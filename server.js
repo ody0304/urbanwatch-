@@ -146,8 +146,8 @@ async function crearTablas() {
 crearTablas();
 
 // Registro con verificación por correo
-// Expresión regular: 8 caracteres, al menos 1 mayúscula, 1 dígito y 1 carácter especial
-const pwdRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8}$/;
+// Después: mínimo 8
+const pwdRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
 // ———————————————————————————————
 // 1) Registro de nuevos ciudadanos
@@ -159,7 +159,7 @@ app.post('/api/registro', async (req, res) => {
   if (!pwdRegex.test(password)) {
     return res.status(400).json({
       success: false,
-      message: 'La contraseña debe tener mínimo 8 caracteres, al menos una mayúscula, un número y un carácter especial.'
+      message: 'La contraseña debe tener al menos 8 caracteres, al menos una mayúscula, un número y un carácter especial.'
     });
   }
 
