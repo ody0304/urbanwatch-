@@ -21,7 +21,7 @@
     </div>
 
     <div class="reporte-contenido">
-      <!-- Info general -->
+      <!-- Información general -->
       <div class="reporte-info">
         <h3 id="reporte-titulo">Título del reporte</h3>
         <div class="info-detalle" id="info-detalle"></div>
@@ -30,13 +30,13 @@
         </div>
       </div>
 
-      <!-- Timeline -->
+      <!-- Timeline de estado -->
       <div class="timeline">
         <h3>Estado del Reporte</h3>
         <div class="timeline-container" id="timeline-container"></div>
       </div>
 
-      <!-- Comentarios (¡visible para todos!) -->
+      <!-- Sección de comentarios (visible para todos los ciudadanos logueados) -->
       <div class="comentarios-seccion">
         <h3>Comentarios Ciudadanos</h3>
         <div class="comentarios-lista" id="comentarios-lista"></div>
@@ -54,6 +54,7 @@
 
   <script>
   document.addEventListener('DOMContentLoaded', async () => {
+    // 1) Obtener ID del reporte
     const params = new URLSearchParams(location.search);
     const id     = params.get('id');
     if (!id || isNaN(id)) {
@@ -61,32 +62,33 @@
       return location.href = 'consultar.html';
     }
 
-    // 1) Cargar reporte, estado y comentarios
+    // 2) Cargar datos del reporte, estado y comentarios
     const [repR, estR, comR] = await Promise.all([
       fetch(`/api/reporte-info/${id}`),
       fetch(`/api/estado-reporte/${id}`),
       fetch(`/api/comentarios/${id}`)
     ]);
+    if (!repR.ok) {
+      alert(`Error al cargar el reporte (${repR.status}).`);
+      return location.href = 'consultar.html';
+    }
     const reporte   = await repR.json();
     const estados   = await estR.json();
     let comentarios = await comR.json();
 
-    // 2) Render info general
+    // 3) Renderizar información general
     document.getElementById('reporte-id').textContent      = `Reporte #${id}`;
     document.getElementById('reporte-titulo').textContent = reporte.Titulo || 'Sin título';
     document.getElementById('info-detalle').innerHTML = `
       <p><strong>Categoría:</strong> ${reporte.Categoria}</p>
       <p><strong>Ubicación:</strong> ${reporte.Direccion}</p>
-      <span class="estado-badge">
-        ${estados[estados.length - 1]?.Estado || 'Pendiente'}
-      </span>
+      <span class="estado-badge">${estados.at(-1)?.Estado || 'Pendiente'}</span>
     `;
-    // imagen
-    const img = document.getElementById('reporte-img');
-    if (reporte.Imagen1?.startsWith('data:image')) img.src = reporte.Imagen1;
-    else img.style.display = 'none';
+    const imgTag = document.getElementById('reporte-img');
+    if (reporte.Imagen1?.startsWith('data:image')) imgTag.src = reporte.Imagen1;
+    else imgTag.style.display = 'none';
 
-    // 3) Render timeline
+    // 4) Renderizar timeline
     const tlc = document.getElementById('timeline-container');
     tlc.innerHTML = estados.map((e,i) => {
       const cls = i === estados.length - 1 ? 'actual' : 'completo';
@@ -100,7 +102,7 @@
         </div>`;
     }).join('');
 
-    // 4) Render comentarios
+    // 5) Renderizar comentarios existentes
     const lista = document.getElementById('comentarios-lista');
     function renderComentarios(arr) {
       lista.innerHTML = arr.map(c => `
@@ -115,26 +117,41 @@
     }
     renderComentarios(comentarios);
 
-    // 5) Botón de comentario (siempre visible)
-    document.getElementById('btn-comentario').addEventListener('click', async () => {
-      const correo = prompt('Tu correo electrónico:');
-      const texto  = prompt('Escribe tu comentario:');
-      if (!correo || !texto) return alert('Correo y comentario requeridos.');
+    // 6) Configurar botón “Añadir Comentario”
+    const btn = document.getElementById('btn-comentario');
+    const correoCiudadano = localStorage.getItem('correoCiudadano');
+    if (!correoCiudadano) {
+      // Si no está logueado, lo mandamos al login
+      alert('Debes iniciar sesión para comentar.');
+      return location.href = 'login-ciudadano.html';
+    }
 
+    btn.addEventListener('click', async () => {
+      const texto = prompt('Escribe tu comentario:');
+      if (!texto) return;
+      // 7) Enviar al servidor
       const resp = await fetch('/api/comentarios', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idReporte: id, correoCiudadano: correo, comentario: texto })
+        body: JSON.stringify({
+          idReporte: id,
+          correoCiudadano,
+          comentario: texto
+        })
       });
       if (resp.ok) {
-        comentarios.push({ CorreoCiudadano: correo, Comentario: texto, FechaComentario: new Date().toISOString() });
+        // 8) Añadir localmente y re-renderizar
+        comentarios.push({
+          CorreoCiudadano: correoCiudadano,
+          Comentario: texto,
+          FechaComentario: new Date().toISOString()
+        });
         renderComentarios(comentarios);
       } else {
-        alert('Error al enviar tu comentario.');
+        alert('Error al guardar tu comentario.');
       }
     });
   });
   </script>
 </body>
 </html>
-
