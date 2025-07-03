@@ -26,7 +26,7 @@
                 <div class="info-detalle"></div>
                 <div class="reporte-imagen">
                     <img src="imagen-placeholder.jpg" alt="Imagen del reporte" id="reporte-img">
-                    <button class="ver-mapa"><i class="fas fa-map-marker-alt"></i> Ver en mapa</button>
+                    <!-- botón “Ver en mapa” eliminado -->
                 </div>
             </div>
 
@@ -36,22 +36,21 @@
             </div>
 
             <div class="comentarios-seccion">
-    <h3>Comentarios Ciudadanos</h3>
-    <div class="comentarios-lista" id="comentarios-lista"></div>
+                <h3>Comentarios Ciudadanos</h3>
+                <div class="comentarios-lista" id="comentarios-lista"></div>
 
-    <!-- Botón con ID para que getElementById lo encuentre -->
-    <button id="btn-comentario" class="btn-comentario">
-      <i class="fas fa-comment-alt"></i> Añadir Comentario
-    </button>
+                <!-- Botón para añadir comentario -->
+                <button id="btn-comentario" class="btn-comentario">
+                  <i class="fas fa-comment-alt"></i> Añadir Comentario
+                </button>
 
-    <div class="comentario-info">
-        <p>
-          <i class="fas fa-info-circle"></i>
-          Solo ciudadanos pueden añadir comentarios. No hay respuestas oficiales en esta plataforma.
-        </p>
-    </div>
-</div>
-
+                <div class="comentario-info">
+                    <p>
+                      <i class="fas fa-info-circle"></i>
+                      Solo ciudadanos pueden añadir comentarios. No hay respuestas oficiales en esta plataforma.
+                    </p>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -59,156 +58,141 @@
         <p>&copy; 2025 URBANWATCH - Plataforma Ciudadana</p>
     </footer>
 
-<script>
-document.addEventListener('DOMContentLoaded', async function () {
-  const urlParams = new URLSearchParams(window.location.search);
-  const id = urlParams.get('id');
-
-  // 1) Validar ID
-  if (!id || isNaN(id)) {
-    alert('ID de reporte inválido o no proporcionado.');
-    window.location.href = 'consultar.html';
-    return;
-  }
-
-  try {
-    // 2) Peticiones en paralelo
-    const [reporteRes, estadosRes, comentariosRes] = await Promise.all([
-      fetch(`/api/reporte-info/${id}`),
-      fetch(`/api/estado-reporte/${id}`),
-      fetch(`/api/comentarios/${id}`)
-    ]);
-
-    if (!reporteRes.ok) {
-      const text = await reporteRes.text();
-      alert(`Error ${reporteRes.status}: ${text}`);
-      return;
-    }
-
-    // 3) Parsear JSON
-    const reporte   = await reporteRes.json();
-    const estados   = await estadosRes.json();
-    let comentarios = await comentariosRes.json();
-
-    // 4) Datos de rol y anonimato
-    const correoAutor     = reporte.CorreoCiudadano;
-    const anonimatoActivo = reporte.EsAnonimo === 1;
-    const empleadoData    = localStorage.getItem('empleadoData');
-    const correoCiudadano = localStorage.getItem('correoCiudadano');
-
-    // 5) Renderizar encabezado e info general
-    document.getElementById('reporte-id').textContent = `Reporte #${id}`;
-    document.querySelector('.reporte-info h3').textContent = reporte.Titulo || 'Sin título';
-    document.querySelector('.info-detalle').innerHTML = `
-      <p><strong>Categoría:</strong> ${reporte.Categoria}</p>
-      <p><strong>Ubicación:</strong> ${reporte.Direccion}</p>
-      <span class="estado-badge">
-        ${estados[estados.length - 1]?.Estado || 'Pendiente'}
-      </span>
-    `;
-    const imgTag = document.getElementById('reporte-img');
-    if (reporte.Imagen1?.startsWith('data:image')) {
-      imgTag.src = reporte.Imagen1;
-    } else {
-      imgTag.style.display = 'none';
-    }
-
-    // 6) Renderizar timeline
-    const timelineContainer = document.getElementById('timeline-container');
-    timelineContainer.innerHTML = '';
-    estados.forEach((etapa, i) => {
-      const clase = i === estados.length - 1 ? 'actual' : 'completo';
-      timelineContainer.innerHTML += `
-        <div class="timeline-item ${clase}">
-          <div class="timeline-icon"><i class="fas fa-clock"></i></div>
-          <div class="timeline-content">
-            <h4>${etapa.Estado}</h4>
-            <p class="timeline-date">${new Date(etapa.Fecha).toLocaleString()}</p>
-          </div>
-        </div>`;
-    });
-
-    // 7) Renderizar comentarios con anonimato
-    const comentariosLista = document.getElementById('comentarios-lista');
-    function renderComentarios(list) {
-      comentariosLista.innerHTML = list.map(c => {
-        let quien;
-        if (empleadoData) {
-          // Empleado ve todo como Anónimo
-          quien = 'Anónimo';
-        } else {
-          // Ciudadano ve así:
-          // - Si reporte anónimo y autor original → Anónimo
-          // - Si no → correo real
-          quien = (anonimatoActivo && c.CorreoCiudadano === correoAutor)
-            ? 'Anónimo'
-            : c.CorreoCiudadano;
-        }
-        return `
-          <div class="comentario">
-            <div class="comentario-header">
-              <span class="usuario"><i class="fas fa-user"></i> ${quien}</span>
-              <span class="fecha">${new Date(c.FechaComentario).toLocaleString()}</span>
-            </div>
-            <p>${c.Comentario}</p>
-          </div>
-        `;
-      }).join('');
-    }
-    renderComentarios(comentarios);
-
-    // 8) Control del botón "Añadir Comentario"
-    const btnCom    = document.getElementById('btn-comentario');
-    const avisoInfo = document.querySelector('.comentario-info');
-
-    if (empleadoData) {
-      // 8a) Empleado → ocultar siempre
-      if (btnCom)    btnCom.style.display    = 'none';
-      if (avisoInfo) avisoInfo.style.display = 'none';
-    } else if (correoCiudadano) {
-      // 8b) Ciudadano → mostrar y permitir
-      if (btnCom) {
-        btnCom.style.display = 'inline-block';
-        btnCom.addEventListener('click', async () => {
-          const texto = prompt('Escribe tu comentario:');
-          if (!texto) return;
-          const resp = await fetch('/api/comentarios', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              idReporte: id,
-              correoCiudadano: correoCiudadano,
-              comentario: texto
-            })
-          });
-          if (resp.ok) {
-            comentarios.push({
-              CorreoCiudadano: correoCiudadano,
-              Comentario: texto,
-              FechaComentario: new Date().toISOString()
-            });
-            renderComentarios(comentarios);
-          } else {
-            alert('Error al guardar tu comentario.');
-          }
-        });
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const params = new URLSearchParams(location.search);
+      const id = params.get('id');
+      if (!id || isNaN(id)) {
+        alert('ID de reporte inválido o no proporcionado.');
+        location.href = 'consultar.html';
+        return;
       }
-    } else {
-      // 8c) Ningún rol válido → ocultar
-      if (btnCom)    btnCom.style.display    = 'none';
-      if (avisoInfo) avisoInfo.style.display = 'none';
-    }
 
-  } catch (err) {
-    console.error('Error en detalle-reporte:', err);
-    alert('Hubo un problema al obtener la información del reporte.');
-    window.location.href = 'consultar.html';
-  }
-});
-</script>
+      try {
+        const [reporteRes, estadosRes, comentariosRes] = await Promise.all([
+          fetch(`/api/reporte-info/${id}`),
+          fetch(`/api/estado-reporte/${id}`),
+          fetch(`/api/comentarios/${id}`)
+        ]);
 
+        if (!reporteRes.ok) {
+          const txt = await reporteRes.text();
+          alert(`Error ${reporteRes.status}: ${txt}`);
+          return;
+        }
 
+        const reporte   = await reporteRes.json();
+        const estados   = await estadosRes.json();
+        let comentarios = await comentariosRes.json();
+
+        // Datos de rol/anonimato
+        const correoAutor     = reporte.CorreoCiudadano;
+        const anonimatoActivo = reporte.EsAnonimo === 1;
+        const empleadoData    = localStorage.getItem('empleadoData');
+        const correoCiudadano = localStorage.getItem('correoCiudadano');
+
+        // Render encabezado e info
+        document.getElementById('reporte-id').textContent = `Reporte #${id}`;
+        document.querySelector('.reporte-info h3').textContent = reporte.Titulo || 'Sin título';
+        document.querySelector('.info-detalle').innerHTML = `
+          <p><strong>Categoría:</strong> ${reporte.Categoria}</p>
+          <p><strong>Ubicación:</strong> ${reporte.Direccion}</p>
+          <span class="estado-badge">
+            ${estados[estados.length - 1]?.Estado || 'Pendiente'}
+          </span>
+        `;
+
+        const imgTag = document.getElementById('reporte-img');
+        if (reporte.Imagen1?.startsWith('data:image')) {
+          imgTag.src = reporte.Imagen1;
+        } else {
+          imgTag.style.display = 'none';
+        }
+
+        // Render timeline
+        const tlc = document.getElementById('timeline-container');
+        tlc.innerHTML = '';
+        estados.forEach((e,i) => {
+          const cls = i === estados.length - 1 ? 'actual' : 'completo';
+          tlc.innerHTML += `
+            <div class="timeline-item ${cls}">
+              <div class="timeline-icon"><i class="fas fa-clock"></i></div>
+              <div class="timeline-content">
+                <h4>${e.Estado}</h4>
+                <p class="timeline-date">${new Date(e.Fecha).toLocaleString()}</p>
+              </div>
+            </div>`;
+        });
+
+        // Render comentarios
+        const lista = document.getElementById('comentarios-lista');
+        function renderComentarios(arr) {
+          lista.innerHTML = arr.map(c => {
+            let quien;
+            if (empleadoData) {
+              // Empleado: siempre anónimo
+              quien = 'Anónimo';
+            } else {
+              // Ciudadano ve nombre real salvo autor anónimo
+              quien = (anonimatoActivo && c.CorreoCiudadano === correoAutor)
+                ? 'Anónimo'
+                : c.CorreoCiudadano;
+            }
+            return `
+              <div class="comentario">
+                <div class="comentario-header">
+                  <span class="usuario"><i class="fas fa-user"></i> ${quien}</span>
+                  <span class="fecha">${new Date(c.FechaComentario).toLocaleString()}</span>
+                </div>
+                <p>${c.Comentario}</p>
+              </div>`;
+          }).join('');
+        }
+        renderComentarios(comentarios);
+
+        // Control botón “Añadir Comentario”
+        const btn = document.getElementById('btn-comentario');
+        const info = document.querySelector('.comentario-info');
+
+        if (empleadoData) {
+          btn.style.display = 'none';
+          info.style.display = 'none';
+        } else if (correoCiudadano) {
+          btn.style.display = 'inline-block';
+          btn.onclick = async () => {
+            const text = prompt('Escribe tu comentario:');
+            if (!text) return;
+            const resp = await fetch('/api/comentarios', {
+              method: 'POST',
+              headers: {'Content-Type':'application/json'},
+              body: JSON.stringify({
+                idReporte: id,
+                correoCiudadano,
+                comentario: text
+              })
+            });
+            if (resp.ok) {
+              comentarios.push({
+                CorreoCiudadano: correoCiudadano,
+                Comentario: text,
+                FechaComentario: new Date().toISOString()
+              });
+              renderComentarios(comentarios);
+            } else {
+              alert('Error al guardar tu comentario.');
+            }
+          };
+        } else {
+          btn.style.display = 'none';
+          info.style.display = 'none';
+        }
+
+      } catch (err) {
+        console.error(err);
+        alert('Hubo un problema al obtener la información del reporte.');
+        location.href = 'consultar.html';
+      }
+    });
+    </script>
 </body>
 </html>
-
-
