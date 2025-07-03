@@ -102,10 +102,7 @@
     const input   = document.getElementById('direccion');
     const btnNext = document.getElementById('next-button');
 
-    // 3) Palabras que indican agua (para rechazar)
-    const aguaKeywords = ["mar", "bahía", "océano", "golfo", "lago", "laguna"];
-
-    // 4) Función para aplicar y mostrar la dirección
+    // 3) Función para aplicar y mostrar la dirección
     function aplicarDireccion(dir) {
       dirRes.textContent   = dir || 'Ninguna';
       input.value          = dir;
@@ -113,29 +110,45 @@
       if (dir) localStorage.setItem('direccionProblema', dir);
     }
 
+    // 4) Limpia marcador (si estaba)
+    function quitarMarcador() {
+      if (marker) {
+        map.removeLayer(marker);
+        marker = null;
+      }
+    }
+
     // 5) Al hacer clic en el mapa
     map.on('click', async e => {
       const { lat, lng } = e.latlng;
-      // colocar o mover marcador
+
+      // Colocar o mover marcador
       if (!marker) marker = L.marker([lat, lng]).addTo(map);
       else marker.setLatLng([lat, lng]);
 
-      // obtener dirección inversa
+      // Obtener dirección inversa
       try {
         const resp = await fetch(
           `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
         );
         const data = await resp.json();
-        const dir  = data.display_name || "";
-        // validamos que no sea mar
-        const baja = dir.toLowerCase();
-        if (aguaKeywords.some(k => baja.includes(k))) {
-          alert("Ese punto está sobre agua. Por favor, selecciona tierra firme.");
+
+        // Si Nominatim indica agua, lo rechazamos
+        if (
+          (data.address && data.address.water) ||
+          data.type === 'water' ||
+          data.type === 'riverbank'
+        ) {
+          alert('Ese punto está sobre agua. Por favor, selecciona tierra firme.');
+          quitarMarcador();
           return;
         }
+
+        const dir = data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
         aplicarDireccion(dir);
       } catch {
-        alert("No se pudo obtener la dirección. Intenta de nuevo.");
+        alert('No se pudo obtener la dirección. Intenta de nuevo.');
+        quitarMarcador();
       }
     });
 
@@ -147,7 +160,7 @@
     // 7) Botón “Siguiente”
     btnNext.addEventListener('click', () => {
       if (!input.value.trim()) {
-        alert("Debes seleccionar o escribir una dirección antes de continuar.");
+        alert('Debes seleccionar o escribir una dirección antes de continuar.');
       } else {
         window.location.href = 'detalles.html';
       }
@@ -155,6 +168,7 @@
   </script>
 </body>
 </html>
+
 
 
 
