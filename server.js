@@ -328,18 +328,70 @@ app.listen(PORT, () => {
   console.log(`🚀 Servidor escuchando en ${BASE_URL}`);
 });
 
-app.post('/api/recover-password', async (req,res) => {
+app.post('/api/recover-password', async (req, res) => {
   console.log('📬 [recover-password] body:', req.body);
   const { email } = req.body;
+
   try {
-    // …lógica SQL…
+    // 1) Conectar y comprobar que exista el usuario
+    await sql.connect(dbConfig);
+    const userResult = await sql.query`
+      SELECT Correo FROM Ciudadanos WHERE Correo = ${email}
+    `;
+    if (userResult.recordset.length === 0) {
+      console.log('❌ recover-password: correo no registrado');
+      return res.status(404).json({
+        success: false,
+        message: 'No existe una cuenta para ese correo'
+      });
+    }
+
+    // 2) Crear token y guardarlo
+    const token = crypto.randomBytes(32).toString('hex');
+    await sql.query`
+      INSERT INTO PasswordResetTokens (Correo, Token, FechaCreacion, Usado)
+      VALUES (${email}, ${token}, GETDATE(), 0)
+    `;
+
+    // 3) Construir el enlace de recuperación
+    const resetLink = `${BASE_URL}/reset-password.html?token=${token}`;
+    console.log('🔗 resetLink:', resetLink);
+
+    // 4) Preparar mailOptions aquí
+    const mailOptions = {
+      from:    `"UrbanWatch" <${process.env.EMAIL_USER}>`,
+      to:      email,
+      subject: 'URBANWATCH – Recuperación de Contraseña',
+      html: `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
+          <h2>Recuperación de Contraseña</h2>
+          <p>Para restablecer tu contraseña haz clic en el botón:</p>
+          <a href="${resetLink}"
+             style="display:inline-block;padding:12px 24px;
+                    background-color:#2C7A7B;color:white;
+                    text-decoration:none;border-radius:4px;">
+            Restablecer Contraseña
+          </a>
+          <p>Si no solicitaste este cambio, ignora este correo.</p>
+        </div>
+      `
+    };
+
     console.log('📧 Enviando mail a:', email);
     await transporter.sendMail(mailOptions);
     console.log('✅ Mail enviado con éxito');
-    return res.json({ success:true, message:'Revisa tu correo' });
-  } catch(err) {
+
+    return res.json({
+      success: true,
+      message: 'Revisa tu correo para restablecer tu contraseña'
+    });
+
+  } catch (err) {
     console.error('❌ Error en recover-password:', err);
-    return res.status(500).json({ success:false, message:'Error interno' });
+    return res.status(500).json({
+      success: false,
+      message: 'Error interno al procesar tu solicitud'
+    });
   }
 });
 
