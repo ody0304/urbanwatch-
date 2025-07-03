@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>URBANWATCH - Acceso Ciudadano</title>
-
-  <!-- Sirve desde public/ -->
   <link rel="stylesheet" href="/login-ciudadano-style.css" />
   <link
     rel="stylesheet"
@@ -67,52 +65,61 @@
     </div>
   </main>
 
-  <!-- Aquí podría ir tu modal de recuperación de contraseña -->
-
   <script>
-  document.getElementById('login-form').addEventListener('submit', async e => {
-    e.preventDefault();
-
-    const emailEl  = document.getElementById('login-email');
-    const pwdEl    = document.getElementById('login-password');
-    const email    = emailEl.value.trim();
-    const password = pwdEl.value;
-
-    // Validar formato rápido
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      emailEl.setCustomValidity('Ingresa un correo válido');
-      emailEl.reportValidity();
-      return;
-    }
-    emailEl.setCustomValidity('');
-
-    try {
-      const resp = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-
-      const result = await resp.json().catch(() => ({}));
-
-      if (resp.ok && result.success) {
-        // Guarda token y datos
-        localStorage.setItem('tokenCiudadano', result.token);
-        localStorage.setItem(
-          'ciudadanoData',
-          JSON.stringify({ nombre: result.user.nombre, correo: result.user.correo })
-        );
-        // Redirige
-        window.location.href = '/ciudadanos-portal.html';
-      } else {
-        alert(result.message || 'Usuario o contraseña incorrectos');
+    // 1) Al cargar la página, chequear si viene ?verified=true
+    window.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('verified') === 'true') {
+        alert('¡Cuenta verificada con éxito! Ya puedes iniciar sesión.');
+        // limpiar la querystring sin recargar
+        window.history.replaceState({}, '', window.location.pathname);
       }
-    } catch (err) {
-      console.error('Error de conexión:', err);
-      alert('Error de conexión. Intenta nuevamente más tarde.');
-    }
-  });
+    });
+
+    // 2) Manejo del formulario de login
+    document.getElementById('login-form').addEventListener('submit', async e => {
+      e.preventDefault();
+
+      const emailEl  = document.getElementById('login-email');
+      const pwdEl    = document.getElementById('login-password');
+      const email    = emailEl.value.trim();
+      const password = pwdEl.value;
+
+      // Validación simple de formato
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        emailEl.setCustomValidity('Ingresa un correo válido');
+        emailEl.reportValidity();
+        return;
+      }
+      emailEl.setCustomValidity('');
+
+      try {
+        const resp = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const result = await resp.json().catch(() => ({}));
+
+        if (resp.ok && result.success) {
+          // Guardar token y datos
+          localStorage.setItem('tokenCiudadano', result.token);
+          localStorage.setItem(
+            'ciudadanoData',
+            JSON.stringify({ nombre: result.user.nombre, correo: result.user.correo })
+          );
+          // Redirigir al portal
+          window.location.href = '/ciudadanos-portal.html';
+        } else {
+          alert(result.message || 'Usuario o contraseña incorrectos');
+        }
+      } catch (err) {
+        console.error('Error de conexión:', err);
+        alert('Error de conexión. Intenta nuevamente más tarde.');
+      }
+    });
   </script>
 </body>
 </html>
