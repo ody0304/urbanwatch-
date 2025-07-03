@@ -70,7 +70,7 @@
     }
 
     try {
-      // Carga de datos
+      // 1) Carga de datos en paralelo
       const [reporteRes, estadosRes, comentariosRes] = await Promise.all([
         fetch(`/api/reporte-info/${id}`),
         fetch(`/api/estado-reporte/${id}`),
@@ -83,17 +83,22 @@
         return;
       }
 
+      // 2) Parseo de JSON
       const reporte   = await reporteRes.json();
       const estados   = await estadosRes.json();
       let comentarios = await comentariosRes.json();
 
-      // Detecta roles desde localStorage
+      // 3) Detecta roles desde localStorage
       const empleadoData    = localStorage.getItem('empleadoData');
       const correoCiudadano = localStorage.getItem('correoCiudadano');
       const correoAutor     = reporte.CorreoCiudadano;
       const anonimatoActivo = reporte.EsAnonimo === 1;
 
-      // Renderiza encabezado e info
+      // **DEBUG**: verifica que estás leyendo bien del localStorage
+      console.log('DEBUG ▶ empleadoData:', empleadoData);
+      console.log('DEBUG ▶ correoCiudadano:', correoCiudadano);
+
+      // 4) Renderiza encabezado e info general
       document.getElementById('reporte-id').textContent      = `Reporte #${id}`;
       document.getElementById('reporte-titulo').textContent = reporte.Titulo || 'Sin título';
       document.getElementById('info-detalle').innerHTML = `
@@ -104,7 +109,7 @@
         </span>
       `;
 
-      // Imagen
+      // 5) Renderiza imagen si existe
       const imgTag = document.getElementById('reporte-img');
       if (reporte.Imagen1?.startsWith('data:image')) {
         imgTag.src = reporte.Imagen1;
@@ -112,10 +117,10 @@
         imgTag.style.display = 'none';
       }
 
-      // Renderiza timeline
+      // 6) Renderiza timeline
       const tlc = document.getElementById('timeline-container');
       tlc.innerHTML = '';
-      estados.forEach((e,i) => {
+      estados.forEach((e, i) => {
         const cls = i === estados.length - 1 ? 'actual' : 'completo';
         tlc.innerHTML += `
           <div class="timeline-item ${cls}">
@@ -127,7 +132,7 @@
           </div>`;
       });
 
-      // Renderiza comentarios
+      // 7) Renderiza comentarios existentes
       const lista = document.getElementById('comentarios-lista');
       function renderComentarios(arr) {
         lista.innerHTML = arr.map(c => {
@@ -153,18 +158,19 @@
       }
       renderComentarios(comentarios);
 
-      // Control del botón “Añadir Comentario”
-      const btn = document.getElementById('btn-comentario');
+      // 8) Control del botón “Añadir Comentario”
+      const btn  = document.getElementById('btn-comentario');
       const info = document.querySelector('.comentario-info');
 
       if (empleadoData) {
-        // Empleado: oculta sección de comentarios
-        btn.style.display = 'none';
+        // Si es empleado → ocultar sección de comentarios
+        btn.style.display  = 'none';
         info.style.display = 'none';
 
       } else if (correoCiudadano) {
-        // Ciudadano autenticado: muestra y habilita “Añadir Comentario”
-        btn.style.display = 'inline-block';
+        // Si es ciudadano autenticado → mostrar y habilitar
+        btn.style.display  = 'inline-block';
+        info.style.display = 'block';
         btn.addEventListener('click', async () => {
           const texto = prompt('Escribe tu comentario:');
           if (!texto) return;
@@ -190,8 +196,8 @@
         });
 
       } else {
-        // No hay sesión: redirige al login
-        btn.style.display = 'none';
+        // Si no hay sesión → ocultar y redirigir al login
+        btn.style.display  = 'none';
         info.style.display = 'none';
         alert('Debes iniciar sesión para ver y añadir comentarios.');
         location.href = 'login-ciudadano.html';
