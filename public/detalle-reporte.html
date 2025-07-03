@@ -21,25 +21,27 @@
     </div>
 
     <div class="reporte-contenido">
+      <!-- Información general -->
       <div class="reporte-info">
-        <h3>Título del reporte</h3>
-        <div class="info-detalle"></div>
+        <h3 id="reporte-titulo">Título del reporte</h3>
+        <div class="info-detalle" id="info-detalle"></div>
         <div class="reporte-imagen">
           <img src="imagen-placeholder.jpg" alt="Imagen del reporte" id="reporte-img">
-          <!-- El botón “Ver en mapa” ha sido eliminado -->
+          <!-- BOTÓN “Ver en mapa” eliminado -->
         </div>
       </div>
 
+      <!-- Timeline de estado -->
       <div class="timeline">
         <h3>Estado del Reporte</h3>
         <div class="timeline-container" id="timeline-container"></div>
       </div>
 
+      <!-- Sección de comentarios -->
       <div class="comentarios-seccion">
         <h3>Comentarios Ciudadanos</h3>
         <div class="comentarios-lista" id="comentarios-lista"></div>
 
-        <!-- Botón para añadir comentario -->
         <button id="btn-comentario" class="btn-comentario">
           <i class="fas fa-comment-alt"></i> Añadir Comentario
         </button>
@@ -64,11 +66,11 @@
     const id = params.get('id');
     if (!id || isNaN(id)) {
       alert('ID de reporte inválido o no proporcionado.');
-      location.href = 'consultar.html';
-      return;
+      return location.href = 'consultar.html';
     }
 
     try {
+      // Carga de datos
       const [reporteRes, estadosRes, comentariosRes] = await Promise.all([
         fetch(`/api/reporte-info/${id}`),
         fetch(`/api/estado-reporte/${id}`),
@@ -85,16 +87,16 @@
       const estados   = await estadosRes.json();
       let comentarios = await comentariosRes.json();
 
-      // Datos de rol y anonimato
-      const correoAutor     = reporte.CorreoCiudadano;
-      const anonimatoActivo = reporte.EsAnonimo === 1;
+      // Detecta roles desde localStorage
       const empleadoData    = localStorage.getItem('empleadoData');
       const correoCiudadano = localStorage.getItem('correoCiudadano');
+      const correoAutor     = reporte.CorreoCiudadano;
+      const anonimatoActivo = reporte.EsAnonimo === 1;
 
-      // Render encabezado e info general
-      document.getElementById('reporte-id').textContent = `Reporte #${id}`;
-      document.querySelector('.reporte-info h3').textContent = reporte.Titulo || 'Sin título';
-      document.querySelector('.info-detalle').innerHTML = `
+      // Renderiza encabezado e info
+      document.getElementById('reporte-id').textContent      = `Reporte #${id}`;
+      document.getElementById('reporte-titulo').textContent = reporte.Titulo || 'Sin título';
+      document.getElementById('info-detalle').innerHTML = `
         <p><strong>Categoría:</strong> ${reporte.Categoria}</p>
         <p><strong>Ubicación:</strong> ${reporte.Direccion}</p>
         <span class="estado-badge">
@@ -102,7 +104,7 @@
         </span>
       `;
 
-      // Render imagen si existe
+      // Imagen
       const imgTag = document.getElementById('reporte-img');
       if (reporte.Imagen1?.startsWith('data:image')) {
         imgTag.src = reporte.Imagen1;
@@ -110,10 +112,10 @@
         imgTag.style.display = 'none';
       }
 
-      // Render timeline
+      // Renderiza timeline
       const tlc = document.getElementById('timeline-container');
       tlc.innerHTML = '';
-      estados.forEach((e, i) => {
+      estados.forEach((e,i) => {
         const cls = i === estados.length - 1 ? 'actual' : 'completo';
         tlc.innerHTML += `
           <div class="timeline-item ${cls}">
@@ -125,21 +127,19 @@
           </div>`;
       });
 
-      // Función para mostrar comentarios
+      // Renderiza comentarios
       const lista = document.getElementById('comentarios-lista');
       function renderComentarios(arr) {
         lista.innerHTML = arr.map(c => {
           let quien;
           if (empleadoData) {
-            // Empleado ve todo como Anónimo
+            // Empleado: siempre Anónimo
             quien = 'Anónimo';
           } else {
-            // Ciudadano ve su correo salvo autor anónimo
-            if (anonimatoActivo && c.CorreoCiudadano === correoAutor) {
-              quien = 'Anónimo';
-            } else {
-              quien = c.CorreoCiudadano;
-            }
+            // Ciudadano: respeta anonimato si aplica
+            quien = (anonimatoActivo && c.CorreoCiudadano === correoAutor)
+              ? 'Anónimo'
+              : c.CorreoCiudadano;
           }
           return `
             <div class="comentario">
@@ -153,16 +153,17 @@
       }
       renderComentarios(comentarios);
 
-      // Control botón “Añadir Comentario”
+      // Control del botón “Añadir Comentario”
       const btn = document.getElementById('btn-comentario');
       const info = document.querySelector('.comentario-info');
 
       if (empleadoData) {
-        // 1) Si es empleado → ocultar todo
+        // Empleado: oculta sección de comentarios
         btn.style.display = 'none';
         info.style.display = 'none';
-      } else {
-        // 2) Ciudadano → siempre mostrar
+
+      } else if (correoCiudadano) {
+        // Ciudadano autenticado: muestra y habilita “Añadir Comentario”
         btn.style.display = 'inline-block';
         btn.addEventListener('click', async () => {
           const texto = prompt('Escribe tu comentario:');
@@ -172,13 +173,13 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               idReporte: id,
-              correoCiudadano: localStorage.getItem('correoCiudadano'),
+              correoCiudadano,
               comentario: texto
             })
           });
           if (resp.ok) {
             comentarios.push({
-              CorreoCiudadano: localStorage.getItem('correoCiudadano'),
+              CorreoCiudadano: correoCiudadano,
               Comentario: texto,
               FechaComentario: new Date().toISOString()
             });
@@ -187,6 +188,13 @@
             alert('Error al guardar tu comentario.');
           }
         });
+
+      } else {
+        // No hay sesión: redirige al login
+        btn.style.display = 'none';
+        info.style.display = 'none';
+        alert('Debes iniciar sesión para ver y añadir comentarios.');
+        location.href = 'login-ciudadano.html';
       }
 
     } catch (err) {
