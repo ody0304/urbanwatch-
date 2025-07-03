@@ -996,15 +996,15 @@ app.post('/api/guardar-reporte', async (req, res) => {
   } = req.body;
 
   try {
+    // 1) Conectar a la BD
     await sql.connect(dbConfig);
 
-    // INSERT + OUTPUT en un solo paso
-    const insertResult = await sql.query`
+    // 2) Insertar nuevo reporte
+    await sql.query`
       INSERT INTO Reportes (
         Categoria, Direccion, Titulo, Descripcion, Urgencia,
         Imagen1, Imagen2, Imagen3, CorreoCiudadano, EsAnonimo, FechaCreacion
       )
-      OUTPUT INSERTED.IdReporte AS IdReporte
       VALUES (
         ${categoria}, ${direccion}, ${titulo}, ${descripcion}, ${urgencia},
         ${imagen1}, ${imagen2}, ${imagen3}, ${correoCiudadano}, ${esAnonimo ? 1 : 0},
@@ -1012,13 +1012,14 @@ app.post('/api/guardar-reporte', async (req, res) => {
       );
     `;
 
-    const idReporte = insertResult.recordset[0]?.IdReporte;
-    if (!idReporte) {
-      throw new Error('No se obtuvo IdReporte. Revisa la definición de la tabla.');
-    }
+    // 3) Recuperar el ID generado
+    const scopeResult = await sql.query`
+      SELECT CAST(SCOPE_IDENTITY() AS INT) AS IdReporte;
+    `;
+    const idReporte = scopeResult.recordset[0].IdReporte;
     console.log('🆔 IdReporte generado:', idReporte);
 
-    // Envío de correo
+    // 4) Enviar correo de confirmación
     await transporter.sendMail({
       from: `"UrbanWatch" <${process.env.EMAIL_USER}>`,
       to: correoCiudadano,
@@ -1034,7 +1035,7 @@ app.post('/api/guardar-reporte', async (req, res) => {
     });
     console.log('✉️ Correo enviado a', correoCiudadano);
 
-    // Respuesta al front
+    // 5) Responder al front-end
     res.json({ success: true, idReporte });
 
   } catch (err) {
@@ -1042,7 +1043,6 @@ app.post('/api/guardar-reporte', async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
-
 
 // 1. Crear tabla en SQL Server para el seguimiento de estado de reportes y comentarios
 
