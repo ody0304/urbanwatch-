@@ -1,198 +1,200 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URBANWATCH - Detalle del Reporte</title>
-    <link rel="stylesheet" href="detalle-reporte-style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>URBANWATCH - Detalle del Reporte</title>
+  <link rel="stylesheet" href="detalle-reporte-style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <header>
-        <div class="logo-container">
-            <img src="logo.png" alt="Logo URBANWATCH" class="logo">
-            <h1>URBANWATCH</h1>
+  <header>
+    <div class="logo-container">
+      <img src="logo.png" alt="Logo URBANWATCH" class="logo">
+      <h1>URBANWATCH</h1>
+    </div>
+  </header>
+
+  <main>
+    <div class="reporte-banner">
+      <h2 id="reporte-id">Reporte</h2>
+    </div>
+
+    <div class="reporte-contenido">
+      <div class="reporte-info">
+        <h3>Título del reporte</h3>
+        <div class="info-detalle"></div>
+        <div class="reporte-imagen">
+          <img src="imagen-placeholder.jpg" alt="Imagen del reporte" id="reporte-img">
+          <!-- El botón “Ver en mapa” ha sido eliminado -->
         </div>
-    </header>
+      </div>
 
-    <main>
-        <div class="reporte-banner">
-            <h2 id="reporte-id">Reporte</h2>
+      <div class="timeline">
+        <h3>Estado del Reporte</h3>
+        <div class="timeline-container" id="timeline-container"></div>
+      </div>
+
+      <div class="comentarios-seccion">
+        <h3>Comentarios Ciudadanos</h3>
+        <div class="comentarios-lista" id="comentarios-lista"></div>
+
+        <!-- Botón para añadir comentario -->
+        <button id="btn-comentario" class="btn-comentario">
+          <i class="fas fa-comment-alt"></i> Añadir Comentario
+        </button>
+
+        <div class="comentario-info">
+          <p>
+            <i class="fas fa-info-circle"></i>
+            Solo ciudadanos pueden añadir comentarios. No hay respuestas oficiales en esta plataforma.
+          </p>
         </div>
+      </div>
+    </div>
+  </main>
 
-        <div class="reporte-contenido">
-            <div class="reporte-info">
-                <h3>Título del reporte</h3>
-                <div class="info-detalle"></div>
-                <div class="reporte-imagen">
-                    <img src="imagen-placeholder.jpg" alt="Imagen del reporte" id="reporte-img">
-                    <!-- botón “Ver en mapa” eliminado -->
-                </div>
-            </div>
+  <footer>
+    <p>&copy; 2025 URBANWATCH - Plataforma Ciudadana</p>
+  </footer>
 
-            <div class="timeline">
-                <h3>Estado del Reporte</h3>
-                <div class="timeline-container" id="timeline-container"></div>
-            </div>
+  <script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    if (!id || isNaN(id)) {
+      alert('ID de reporte inválido o no proporcionado.');
+      location.href = 'consultar.html';
+      return;
+    }
 
-            <div class="comentarios-seccion">
-                <h3>Comentarios Ciudadanos</h3>
-                <div class="comentarios-lista" id="comentarios-lista"></div>
+    try {
+      const [reporteRes, estadosRes, comentariosRes] = await Promise.all([
+        fetch(`/api/reporte-info/${id}`),
+        fetch(`/api/estado-reporte/${id}`),
+        fetch(`/api/comentarios/${id}`)
+      ]);
 
-                <!-- Botón para añadir comentario -->
-                <button id="btn-comentario" class="btn-comentario">
-                  <i class="fas fa-comment-alt"></i> Añadir Comentario
-                </button>
-
-                <div class="comentario-info">
-                    <p>
-                      <i class="fas fa-info-circle"></i>
-                      Solo ciudadanos pueden añadir comentarios. No hay respuestas oficiales en esta plataforma.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <footer>
-        <p>&copy; 2025 URBANWATCH - Plataforma Ciudadana</p>
-    </footer>
-
-    <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const params = new URLSearchParams(location.search);
-      const id = params.get('id');
-      if (!id || isNaN(id)) {
-        alert('ID de reporte inválido o no proporcionado.');
-        location.href = 'consultar.html';
+      if (!reporteRes.ok) {
+        const txt = await reporteRes.text();
+        alert(`Error ${reporteRes.status}: ${txt}`);
         return;
       }
 
-      try {
-        const [reporteRes, estadosRes, comentariosRes] = await Promise.all([
-          fetch(`/api/reporte-info/${id}`),
-          fetch(`/api/estado-reporte/${id}`),
-          fetch(`/api/comentarios/${id}`)
-        ]);
+      const reporte   = await reporteRes.json();
+      const estados   = await estadosRes.json();
+      let comentarios = await comentariosRes.json();
 
-        if (!reporteRes.ok) {
-          const txt = await reporteRes.text();
-          alert(`Error ${reporteRes.status}: ${txt}`);
-          return;
-        }
+      // Datos de rol y anonimato
+      const correoAutor     = reporte.CorreoCiudadano;
+      const anonimatoActivo = reporte.EsAnonimo === 1;
+      const empleadoData    = localStorage.getItem('empleadoData');
+      const correoCiudadano = localStorage.getItem('correoCiudadano');
 
-        const reporte   = await reporteRes.json();
-        const estados   = await estadosRes.json();
-        let comentarios = await comentariosRes.json();
+      // Render encabezado e info general
+      document.getElementById('reporte-id').textContent = `Reporte #${id}`;
+      document.querySelector('.reporte-info h3').textContent = reporte.Titulo || 'Sin título';
+      document.querySelector('.info-detalle').innerHTML = `
+        <p><strong>Categoría:</strong> ${reporte.Categoria}</p>
+        <p><strong>Ubicación:</strong> ${reporte.Direccion}</p>
+        <span class="estado-badge">
+          ${estados[estados.length - 1]?.Estado || 'Pendiente'}
+        </span>
+      `;
 
-        // Datos de rol/anonimato
-        const correoAutor     = reporte.CorreoCiudadano;
-        const anonimatoActivo = reporte.EsAnonimo === 1;
-        const empleadoData    = localStorage.getItem('empleadoData');
-        const correoCiudadano = localStorage.getItem('correoCiudadano');
+      // Render imagen si existe
+      const imgTag = document.getElementById('reporte-img');
+      if (reporte.Imagen1?.startsWith('data:image')) {
+        imgTag.src = reporte.Imagen1;
+      } else {
+        imgTag.style.display = 'none';
+      }
 
-        // Render encabezado e info
-        document.getElementById('reporte-id').textContent = `Reporte #${id}`;
-        document.querySelector('.reporte-info h3').textContent = reporte.Titulo || 'Sin título';
-        document.querySelector('.info-detalle').innerHTML = `
-          <p><strong>Categoría:</strong> ${reporte.Categoria}</p>
-          <p><strong>Ubicación:</strong> ${reporte.Direccion}</p>
-          <span class="estado-badge">
-            ${estados[estados.length - 1]?.Estado || 'Pendiente'}
-          </span>
-        `;
+      // Render timeline
+      const tlc = document.getElementById('timeline-container');
+      tlc.innerHTML = '';
+      estados.forEach((e, i) => {
+        const cls = i === estados.length - 1 ? 'actual' : 'completo';
+        tlc.innerHTML += `
+          <div class="timeline-item ${cls}">
+            <div class="timeline-icon"><i class="fas fa-clock"></i></div>
+            <div class="timeline-content">
+              <h4>${e.Estado}</h4>
+              <p class="timeline-date">${new Date(e.Fecha).toLocaleString()}</p>
+            </div>
+          </div>`;
+      });
 
-        const imgTag = document.getElementById('reporte-img');
-        if (reporte.Imagen1?.startsWith('data:image')) {
-          imgTag.src = reporte.Imagen1;
-        } else {
-          imgTag.style.display = 'none';
-        }
-
-        // Render timeline
-        const tlc = document.getElementById('timeline-container');
-        tlc.innerHTML = '';
-        estados.forEach((e,i) => {
-          const cls = i === estados.length - 1 ? 'actual' : 'completo';
-          tlc.innerHTML += `
-            <div class="timeline-item ${cls}">
-              <div class="timeline-icon"><i class="fas fa-clock"></i></div>
-              <div class="timeline-content">
-                <h4>${e.Estado}</h4>
-                <p class="timeline-date">${new Date(e.Fecha).toLocaleString()}</p>
-              </div>
-            </div>`;
-        });
-
-        // Render comentarios
-        const lista = document.getElementById('comentarios-lista');
-        function renderComentarios(arr) {
-          lista.innerHTML = arr.map(c => {
-            let quien;
-            if (empleadoData) {
-              // Empleado: siempre anónimo
+      // Función para mostrar comentarios
+      const lista = document.getElementById('comentarios-lista');
+      function renderComentarios(arr) {
+        lista.innerHTML = arr.map(c => {
+          let quien;
+          if (empleadoData) {
+            // Empleado ve todo como Anónimo
+            quien = 'Anónimo';
+          } else {
+            // Ciudadano ve su correo salvo autor anónimo
+            if (anonimatoActivo && c.CorreoCiudadano === correoAutor) {
               quien = 'Anónimo';
             } else {
-              // Ciudadano ve nombre real salvo autor anónimo
-              quien = (anonimatoActivo && c.CorreoCiudadano === correoAutor)
-                ? 'Anónimo'
-                : c.CorreoCiudadano;
+              quien = c.CorreoCiudadano;
             }
-            return `
-              <div class="comentario">
-                <div class="comentario-header">
-                  <span class="usuario"><i class="fas fa-user"></i> ${quien}</span>
-                  <span class="fecha">${new Date(c.FechaComentario).toLocaleString()}</span>
-                </div>
-                <p>${c.Comentario}</p>
-              </div>`;
-          }).join('');
-        }
-        renderComentarios(comentarios);
-
-        // Control botón “Añadir Comentario”
-        const btn = document.getElementById('btn-comentario');
-        const info = document.querySelector('.comentario-info');
-
-        if (empleadoData) {
-          btn.style.display = 'none';
-          info.style.display = 'none';
-        } else if (correoCiudadano) {
-          btn.style.display = 'inline-block';
-          btn.onclick = async () => {
-            const text = prompt('Escribe tu comentario:');
-            if (!text) return;
-            const resp = await fetch('/api/comentarios', {
-              method: 'POST',
-              headers: {'Content-Type':'application/json'},
-              body: JSON.stringify({
-                idReporte: id,
-                correoCiudadano,
-                comentario: text
-              })
-            });
-            if (resp.ok) {
-              comentarios.push({
-                CorreoCiudadano: correoCiudadano,
-                Comentario: text,
-                FechaComentario: new Date().toISOString()
-              });
-              renderComentarios(comentarios);
-            } else {
-              alert('Error al guardar tu comentario.');
-            }
-          };
-        } else {
-          btn.style.display = 'none';
-          info.style.display = 'none';
-        }
-
-      } catch (err) {
-        console.error(err);
-        alert('Hubo un problema al obtener la información del reporte.');
-        location.href = 'consultar.html';
+          }
+          return `
+            <div class="comentario">
+              <div class="comentario-header">
+                <span class="usuario"><i class="fas fa-user"></i> ${quien}</span>
+                <span class="fecha">${new Date(c.FechaComentario).toLocaleString()}</span>
+              </div>
+              <p>${c.Comentario}</p>
+            </div>`;
+        }).join('');
       }
-    });
-    </script>
+      renderComentarios(comentarios);
+
+      // Control botón “Añadir Comentario”
+      const btn = document.getElementById('btn-comentario');
+      const info = document.querySelector('.comentario-info');
+
+      if (empleadoData) {
+        // 1) Si es empleado → ocultar todo
+        btn.style.display = 'none';
+        info.style.display = 'none';
+      } else {
+        // 2) Ciudadano → siempre mostrar
+        btn.style.display = 'inline-block';
+        btn.addEventListener('click', async () => {
+          const texto = prompt('Escribe tu comentario:');
+          if (!texto) return;
+          const resp = await fetch('/api/comentarios', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              idReporte: id,
+              correoCiudadano: localStorage.getItem('correoCiudadano'),
+              comentario: texto
+            })
+          });
+          if (resp.ok) {
+            comentarios.push({
+              CorreoCiudadano: localStorage.getItem('correoCiudadano'),
+              Comentario: texto,
+              FechaComentario: new Date().toISOString()
+            });
+            renderComentarios(comentarios);
+          } else {
+            alert('Error al guardar tu comentario.');
+          }
+        });
+      }
+
+    } catch (err) {
+      console.error(err);
+      alert('Hubo un problema al obtener la información del reporte.');
+      location.href = 'consultar.html';
+    }
+  });
+  </script>
 </body>
 </html>
