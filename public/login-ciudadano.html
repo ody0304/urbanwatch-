@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>URBANWATCH - Acceso Ciudadano</title>
   <link rel="stylesheet" href="/login-ciudadano-style.css" />
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-  />
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 </head>
 <body>
   <header>
@@ -30,23 +28,13 @@
             <form id="login-form">
               <div class="form-group">
                 <label for="login-email">Correo Electrónico:</label>
-                <input
-                  type="email"
-                  id="login-email"
-                  name="email"
-                  required
-                  pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
-                  title="Debe tener formato ejemplo@dominio.ext"
-                />
+                <input type="email" id="login-email" name="email" required
+                       pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
+                       title="Debe tener formato ejemplo@dominio.ext" />
               </div>
               <div class="form-group">
                 <label for="login-password">Contraseña:</label>
-                <input
-                  type="password"
-                  id="login-password"
-                  name="password"
-                  required
-                />
+                <input type="password" id="login-password" name="password" required />
               </div>
               <div class="forgot-password">
                 <a href="#" id="forgot-password-link">¿Olvidó su contraseña?</a>
@@ -71,21 +59,18 @@
       const params = new URLSearchParams(window.location.search);
       if (params.get('verified') === 'true') {
         alert('¡Cuenta verificada con éxito! Ya puedes iniciar sesión.');
-        // Limpio la URL para no mostrar siempre la alerta
         window.history.replaceState({}, '', window.location.pathname);
       }
     });
 
-    // 2) Manejo del submit
+    // 2) Manejo del submit de login
     document.getElementById('login-form').addEventListener('submit', async e => {
       e.preventDefault();
+      const emailEl = document.getElementById('login-email');
+      const pwdEl   = document.getElementById('login-password');
+      const email   = emailEl.value.trim();
+      const password= pwdEl.value;
 
-      const emailEl  = document.getElementById('login-email');
-      const pwdEl    = document.getElementById('login-password');
-      const email    = emailEl.value.trim();
-      const password = pwdEl.value;
-
-      // Validación de formato de correo
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         emailEl.setCustomValidity('Ingresa un correo válido');
@@ -103,15 +88,12 @@
         const result = await resp.json().catch(() => ({}));
 
         if (resp.ok && result.success) {
-          // 3) Guardo el token y los datos del usuario...
           localStorage.setItem('tokenCiudadano', result.token);
-          // ← AÑADIDO: guardo el correo bajo la clave que luego uso
           localStorage.setItem('correoCiudadano', result.user.correo);
           localStorage.setItem(
             'ciudadanoData',
             JSON.stringify({ nombre: result.user.nombre, correo: result.user.correo })
           );
-          // ...y redirijo al portal
           window.location.href = '/ciudadanos-portal.html';
         } else {
           alert(result.message || 'Usuario o contraseña incorrectos');
@@ -121,6 +103,15 @@
         alert('Error de conexión. Intenta nuevamente más tarde.');
       }
     });
+
+    // 3) Listener para “¿Olvidó su contraseña?”
+    document.getElementById('forgot-password-link')
+      .addEventListener('click', function(e) {
+        e.preventDefault();
+        // Cambia aquí por tu ruta real de restablecer
+        window.location.href = '/reset-password.html';
+      });
   </script>
 </body>
 </html>
+
