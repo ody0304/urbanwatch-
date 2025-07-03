@@ -989,46 +989,62 @@ async function crearTablaReportes() {
 crearTablaReportes();
 
 
+// 5) Tu endpoint para guardar reporte y enviar correo
 app.post('/api/guardar-reporte', async (req, res) => {
-  console.log('📥 Body recibido en /api/guardar-reporte:', req.body);
-  const { categoria, direccion, titulo, descripcion, urgencia,
-          imagen1, imagen2, imagen3, correoCiudadano, esAnonimo } = req.body;
+  const {
+    categoria, direccion, titulo, descripcion, urgencia,
+    imagen1, imagen2, imagen3, correoCiudadano, esAnonimo
+  } = req.body;
 
   try {
+    // Conecta a la BD
     await sql.connect(dbConfig);
 
-    // 1) Insert sin OUTPUT
+    // Inserta el reporte
     await sql.query`
       INSERT INTO Reportes (
         Categoria, Direccion, Titulo, Descripcion, Urgencia,
         Imagen1, Imagen2, Imagen3, CorreoCiudadano, EsAnonimo, FechaCreacion
-      )
-      VALUES (
+      ) VALUES (
         ${categoria}, ${direccion}, ${titulo}, ${descripcion}, ${urgencia},
         ${imagen1}, ${imagen2}, ${imagen3}, ${correoCiudadano}, ${esAnonimo ? 1 : 0},
         GETDATE()
       );
     `;
 
-    // 2) Obtener el ID generado
-    const identityResult = await sql.query`SELECT SCOPE_IDENTITY() AS IdReporte;`;
-    const nuevoId = identityResult.recordset[0].IdReporte;
+    // Recupera el ID recién generado
+    const { recordset } = await sql.query`SELECT SCOPE_IDENTITY() AS IdReporte;`;
+    const idReporte = recordset[0].IdReporte;
 
-    // 3) Responder al cliente
-    res.status(200).json({ success: true, idReporte: nuevoId });
+    // Prepara el correo
+    const mailOptions = {
+      from: `"UrbanWatch" <${process.env.EMAIL_USER}>`,
+      to: correoCiudadano,
+      subject: `UrbanWatch – Confirmación de reporte #${idReporte}`,
+      html: `
+        <h2>¡Reporte recibido!</h2>
+        <p>Tu reporte con ID <strong>${idReporte}</strong> ha sido registrado.</p>
+        <p><strong>Título:</strong> ${titulo}</p>
+        <p><strong>Descripción:</strong> ${descripcion}</p>
+        <br/>
+        <p>Gracias por ayudarnos a mejorar tu ciudad.</p>
+      `
+    };
 
-    // 4) (Opcional) envío de correo en background …
+    // Envía el correo
+    await transporter.sendMail(mailOptions);
+
+    // Responde al front
+    res.json({ success: true, idReporte });
+
   } catch (err) {
-    console.error("❌ Error al guardar el reporte:", err);
+    console.error('Error al guardar reporte o enviar correo:', err);
     res.status(500).json({
       success: false,
-      message: `Error al guardar el reporte: ${err.message}`
+      message: err.message
     });
   }
 });
-
-
-
 
 
 // 1. Crear tabla en SQL Server para el seguimiento de estado de reportes y comentarios
