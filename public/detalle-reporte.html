@@ -21,23 +21,22 @@
     </div>
 
     <div class="reporte-contenido">
-      <!-- Información general -->
+      <!-- Info general -->
       <div class="reporte-info">
         <h3 id="reporte-titulo">Título del reporte</h3>
         <div class="info-detalle" id="info-detalle"></div>
         <div class="reporte-imagen">
           <img src="imagen-placeholder.jpg" alt="Imagen del reporte" id="reporte-img">
-          <!-- BOTÓN “Ver en mapa” eliminado -->
         </div>
       </div>
 
-      <!-- Timeline de estado -->
+      <!-- Timeline -->
       <div class="timeline">
         <h3>Estado del Reporte</h3>
         <div class="timeline-container" id="timeline-container"></div>
       </div>
 
-      <!-- Sección de comentarios -->
+      <!-- Comentarios (¡visible para todos!) -->
       <div class="comentarios-seccion">
         <h3>Comentarios Ciudadanos</h3>
         <div class="comentarios-lista" id="comentarios-lista"></div>
@@ -45,13 +44,6 @@
         <button id="btn-comentario" class="btn-comentario">
           <i class="fas fa-comment-alt"></i> Añadir Comentario
         </button>
-
-        <div class="comentario-info">
-          <p>
-            <i class="fas fa-info-circle"></i>
-            Solo ciudadanos pueden añadir comentarios. No hay respuestas oficiales en esta plataforma.
-          </p>
-        </div>
       </div>
     </div>
   </main>
@@ -65,145 +57,82 @@
     const params = new URLSearchParams(location.search);
     const id     = params.get('id');
     if (!id || isNaN(id)) {
-      alert('ID de reporte inválido o no proporcionado.');
+      alert('ID de reporte inválido.');
       return location.href = 'consultar.html';
     }
 
-    try {
-      // 1) Cargar datos en paralelo
-      const [reporteRes, estadosRes, comentariosRes] = await Promise.all([
-        fetch(`/api/reporte-info/${id}`),
-        fetch(`/api/estado-reporte/${id}`),
-        fetch(`/api/comentarios/${id}`)
-      ]);
+    // 1) Cargar reporte, estado y comentarios
+    const [repR, estR, comR] = await Promise.all([
+      fetch(`/api/reporte-info/${id}`),
+      fetch(`/api/estado-reporte/${id}`),
+      fetch(`/api/comentarios/${id}`)
+    ]);
+    const reporte   = await repR.json();
+    const estados   = await estR.json();
+    let comentarios = await comR.json();
 
-      if (!reporteRes.ok) {
-        const txt = await reporteRes.text();
-        alert(`Error ${reporteRes.status}: ${txt}`);
-        return;
-      }
+    // 2) Render info general
+    document.getElementById('reporte-id').textContent      = `Reporte #${id}`;
+    document.getElementById('reporte-titulo').textContent = reporte.Titulo || 'Sin título';
+    document.getElementById('info-detalle').innerHTML = `
+      <p><strong>Categoría:</strong> ${reporte.Categoria}</p>
+      <p><strong>Ubicación:</strong> ${reporte.Direccion}</p>
+      <span class="estado-badge">
+        ${estados[estados.length - 1]?.Estado || 'Pendiente'}
+      </span>
+    `;
+    // imagen
+    const img = document.getElementById('reporte-img');
+    if (reporte.Imagen1?.startsWith('data:image')) img.src = reporte.Imagen1;
+    else img.style.display = 'none';
 
-      const reporte     = await reporteRes.json();
-      const estados     = await estadosRes.json();
-      let comentarios   = await comentariosRes.json();
+    // 3) Render timeline
+    const tlc = document.getElementById('timeline-container');
+    tlc.innerHTML = estados.map((e,i) => {
+      const cls = i === estados.length - 1 ? 'actual' : 'completo';
+      return `
+        <div class="timeline-item ${cls}">
+          <div class="timeline-icon"><i class="fas fa-clock"></i></div>
+          <div class="timeline-content">
+            <h4>${e.Estado}</h4>
+            <p class="timeline-date">${new Date(e.Fecha).toLocaleString()}</p>
+          </div>
+        </div>`;
+    }).join('');
 
-      // 2) Detectar roles/sesiones
-      const empleadoData    = localStorage.getItem('empleadoData');
-      const supervisorData  = sessionStorage.getItem('supervisor');
-      const correoCiudadano = localStorage.getItem('correoCiudadano');
-      const correoAutor     = reporte.CorreoCiudadano;
-      const anonimatoActivo = reporte.EsAnonimo === 1;
-
-      // 3) Renderizar encabezado e info general
-      document.getElementById('reporte-id').textContent      = `Reporte #${id}`;
-      document.getElementById('reporte-titulo').textContent = reporte.Titulo || 'Sin título';
-      document.getElementById('info-detalle').innerHTML     = `
-        <p><strong>Categoría:</strong> ${reporte.Categoria}</p>
-        <p><strong>Ubicación:</strong> ${reporte.Direccion}</p>
-        <span class="estado-badge">
-          ${estados[estados.length - 1]?.Estado || 'Pendiente'}
-        </span>
-      `;
-
-      // 4) Mostrar imagen si existe
-      const imgTag = document.getElementById('reporte-img');
-      if (reporte.Imagen1?.startsWith('data:image')) {
-        imgTag.src = reporte.Imagen1;
-      } else {
-        imgTag.style.display = 'none';
-      }
-
-      // 5) Renderizar timeline
-      const tlc = document.getElementById('timeline-container');
-      tlc.innerHTML = '';
-      estados.forEach((e, i) => {
-        const cls = i === estados.length - 1 ? 'actual' : 'completo';
-        tlc.innerHTML += `
-          <div class="timeline-item ${cls}">
-            <div class="timeline-icon"><i class="fas fa-clock"></i></div>
-            <div class="timeline-content">
-              <h4>${e.Estado}</h4>
-              <p class="timeline-date">${new Date(e.Fecha).toLocaleString()}</p>
-            </div>
-          </div>`;
-      });
-
-      // 6) Renderizar comentarios
-      const lista = document.getElementById('comentarios-lista');
-      function renderComentarios(arr) {
-        lista.innerHTML = arr.map(c => {
-          let quien;
-          if (empleadoData || supervisorData) {
-            // Empleado o supervisor → siempre Anónimo
-            quien = 'Anónimo';
-          } else {
-            // Ciudadano ve anonimato si aplica
-            quien = (anonimatoActivo && c.CorreoCiudadano === correoAutor)
-              ? 'Anónimo'
-              : c.CorreoCiudadano;
-          }
-          return `
-            <div class="comentario">
-              <div class="comentario-header">
-                <span class="usuario"><i class="fas fa-user"></i> ${quien}</span>
-                <span class="fecha">${new Date(c.FechaComentario).toLocaleString()}</span>
-              </div>
-              <p>${c.Comentario}</p>
-            </div>`;
-        }).join('');
-      }
-      renderComentarios(comentarios);
-
-      // 7) Control del botón “Añadir Comentario”
-      const btn  = document.getElementById('btn-comentario');
-      const info = document.querySelector('.comentario-info');
-
-      if (empleadoData || supervisorData) {
-        // Empleado o supervisor → ocultar sección de comentarios
-        btn.style.display  = 'none';
-        info.style.display = 'none';
-
-      } else if (correoCiudadano) {
-        // Ciudadano autenticado → mostrar y habilitar
-        btn.style.display  = 'inline-block';
-        info.style.display = 'block';
-        btn.addEventListener('click', async () => {
-          const texto = prompt('Escribe tu comentario:');
-          if (!texto) return;
-          const resp = await fetch('/api/comentarios', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              idReporte:        id,
-              correoCiudadano,
-              comentario:      texto
-            })
-          });
-          if (resp.ok) {
-            comentarios.push({
-              CorreoCiudadano:   correoCiudadano,
-              Comentario:        texto,
-              FechaComentario:   new Date().toISOString()
-            });
-            renderComentarios(comentarios);
-          } else {
-            alert('Error al guardar tu comentario.');
-          }
-        });
-
-      } else {
-        // Ninguna sesión válida → redirigir al login ciudadano
-        btn.style.display  = 'none';
-        info.style.display = 'none';
-        alert('Debes iniciar sesión para ver y añadir comentarios.');
-        location.href = 'login-ciudadano.html';
-      }
-
-    } catch (err) {
-      console.error(err);
-      alert('Hubo un problema al obtener la información del reporte.');
-      location.href = 'consultar.html';
+    // 4) Render comentarios
+    const lista = document.getElementById('comentarios-lista');
+    function renderComentarios(arr) {
+      lista.innerHTML = arr.map(c => `
+        <div class="comentario">
+          <div class="comentario-header">
+            <span class="usuario"><i class="fas fa-user"></i> ${c.CorreoCiudadano}</span>
+            <span class="fecha">${new Date(c.FechaComentario).toLocaleString()}</span>
+          </div>
+          <p>${c.Comentario}</p>
+        </div>
+      `).join('');
     }
+    renderComentarios(comentarios);
+
+    // 5) Botón de comentario (siempre visible)
+    document.getElementById('btn-comentario').addEventListener('click', async () => {
+      const correo = prompt('Tu correo electrónico:');
+      const texto  = prompt('Escribe tu comentario:');
+      if (!correo || !texto) return alert('Correo y comentario requeridos.');
+
+      const resp = await fetch('/api/comentarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idReporte: id, correoCiudadano: correo, comentario: texto })
+      });
+      if (resp.ok) {
+        comentarios.push({ CorreoCiudadano: correo, Comentario: texto, FechaComentario: new Date().toISOString() });
+        renderComentarios(comentarios);
+      } else {
+        alert('Error al enviar tu comentario.');
+      }
+    });
   });
   </script>
 </body>
