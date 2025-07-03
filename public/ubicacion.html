@@ -10,6 +10,22 @@
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <style>
+    /* --- Flex container para mapa + sidebar --- */
+    main { display: flex; gap: 2rem; }
+    .report-container { flex: 1; }
+    .progress-sidebar { width: 200px; }
+    .progress-steps .step {
+      display: flex; align-items: center; margin-bottom: 1rem;
+    }
+    .progress-steps .step-number {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: #ddd; margin-right: .5rem;
+    }
+    .progress-steps .step.completed .step-number { background: #2C7A7B; color: white; }
+    .progress-steps .step.active .step-number { background: #2C7A7B; color: white; }
+  </style>
 </head>
 <body>
   <header>
@@ -24,6 +40,7 @@
   </div>
 
   <main>
+    <!-- ======= panel principal ======= -->
     <div class="report-container">
       <h2>Ubicación del problema</h2>
       <p class="subtitle">Seleccione en el mapa o ingrese manualmente</p>
@@ -41,27 +58,46 @@
             placeholder="Ingrese la dirección del problema"/>
           <div class="input-underline"></div>
         </div>
-        <!-- Eliminado el bloque `.current-location` -->
       </div>
 
-      <div class="navigation-buttons">
+      <div class="navigation-buttons" style="margin-top: 1.5rem;">
         <a href="reportar.html" class="nav-button prev-button">
           <i class="fas fa-arrow-left"></i> Anterior
         </a>
-        <!-- Convertimos el siguiente en botón para controlar el click -->
         <button id="next-button" class="nav-button next-button" disabled>
           Siguiente <i class="fas fa-arrow-right"></i>
         </button>
       </div>
     </div>
 
-    <div class="progress-sidebar">
-      <!-- … progreso … -->
-    </div>
+    <!-- ======= barra lateral de progreso ======= -->
+    <aside class="progress-sidebar">
+      <div class="progress-steps">
+        <div class="step completed">
+          <div class="step-number"><i class="fas fa-check"></i></div>
+          <div class="step-label">Categoría</div>
+        </div>
+        <div class="step active">
+          <div class="step-number">2</div>
+          <div class="step-label">Ubicación</div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-label">Detalles</div>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <div class="step-label">Imágenes</div>
+        </div>
+        <div class="step">
+          <div class="step-number">5</div>
+          <div class="step-label">Confirmar</div>
+        </div>
+      </div>
+    </aside>
   </main>
 
   <script>
-    // --- Configuración inicial ---
     const sanJoseBounds = [[22.98, -109.82], [23.14, -109.58]];
     const map = L.map('map', {
       maxBounds: sanJoseBounds,
@@ -80,19 +116,16 @@
     const inputDireccion = document.getElementById('direccion');
     const nextButton = document.getElementById('next-button');
 
-    // Guarda y valida una dirección válida (no mar)
     async function setDireccion(lat, lng, textoManual = null) {
       let dir;
       if (textoManual) {
         dir = textoManual;
       } else {
-        // Reverse geocode
         const res = await fetch(
           `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
         );
         const data = await res.json();
         dir = data.display_name || '';
-        // Rechaza si no parece calle/road/street
         if (!/road|street|avenue|calle|camino/i.test(dir)) {
           alert('Por favor seleccione un punto en tierra firme.');
           return false;
@@ -105,7 +138,6 @@
       return true;
     }
 
-    // 1) Click en el mapa
     map.on('click', async e => {
       const ok = await setDireccion(e.latlng.lat, e.latlng.lng);
       if (ok) {
@@ -117,23 +149,22 @@
       }
     });
 
-    // 2) Dirección manual
     inputDireccion.addEventListener('input', () => {
-      // No habilitar hasta que tenga algo de texto
-      nextButton.disabled = !inputDireccion.value.trim();
-      direccionResultadoEl.textContent = inputDireccion.value.trim() || 'Ninguna';
+      const text = inputDireccion.value.trim();
+      nextButton.disabled = !text;
+      direccionResultadoEl.textContent = text || 'Ninguna';
+      if (text) localStorage.setItem('direccionProblema', text);
     });
 
-    // 3) Al pulsar “Siguiente”
     nextButton.addEventListener('click', () => {
       const dir = inputDireccion.value.trim();
       if (!dir) {
         alert('Debes seleccionar o escribir una dirección antes de continuar.');
         return;
       }
-      // ya guardamos en localStorage en setDireccion o input
       window.location.href = 'detalles.html';
     });
   </script>
 </body>
 </html>
+
