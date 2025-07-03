@@ -44,7 +44,7 @@
                   autocomplete="new-password"
                 />
                 <ul id="password-requirements" class="password-reqs">
-                  <li id="req-length"    class="invalid">8 caracteres exactos</li>
+                  <li id="req-length"    class="invalid">Mínimo 8 caracteres</li>
                   <li id="req-uppercase" class="invalid">Al menos 1 letra mayúscula</li>
                   <li id="req-digit"     class="invalid">Al menos 1 número</li>
                   <li id="req-special"   class="invalid">Al menos 1 carácter especial</li>
@@ -91,7 +91,8 @@
     const reqDigit     = document.getElementById('req-digit');
     const reqSpecial   = document.getElementById('req-special');
 
-    const hasCorrectLength = pwd => pwd.length === 8;
+    // Ahora mínimo 8 caracteres
+    const hasCorrectLength = pwd => pwd.length >= 8;
     const hasUppercase     = pwd => /[A-Z]/.test(pwd);
     const hasDigit         = pwd => /\d/.test(pwd);
     const hasSpecial       = pwd => /[^A-Za-z0-9]/.test(pwd);
@@ -160,3 +161,4 @@
   </script>
 </body>
 </html>
+
