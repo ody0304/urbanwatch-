@@ -989,7 +989,6 @@ async function crearTablaReportes() {
 crearTablaReportes();
 
 
-// 5) Tu endpoint para guardar reporte y enviar correo
 app.post('/api/guardar-reporte', async (req, res) => {
   const {
     categoria, direccion, titulo, descripcion, urgencia,
@@ -997,27 +996,30 @@ app.post('/api/guardar-reporte', async (req, res) => {
   } = req.body;
 
   try {
-    // Conecta a la BD
     await sql.connect(dbConfig);
 
-    // Inserta el reporte
-    await sql.query`
+    // INSERT + OUTPUT en un solo paso
+    const insertResult = await sql.query`
       INSERT INTO Reportes (
         Categoria, Direccion, Titulo, Descripcion, Urgencia,
         Imagen1, Imagen2, Imagen3, CorreoCiudadano, EsAnonimo, FechaCreacion
-      ) VALUES (
+      )
+      OUTPUT INSERTED.IdReporte AS IdReporte
+      VALUES (
         ${categoria}, ${direccion}, ${titulo}, ${descripcion}, ${urgencia},
         ${imagen1}, ${imagen2}, ${imagen3}, ${correoCiudadano}, ${esAnonimo ? 1 : 0},
         GETDATE()
       );
     `;
 
-    // Recupera el ID recién generado
-    const { recordset } = await sql.query`SELECT SCOPE_IDENTITY() AS IdReporte;`;
-    const idReporte = recordset[0].IdReporte;
+    const idReporte = insertResult.recordset[0]?.IdReporte;
+    if (!idReporte) {
+      throw new Error('No se obtuvo IdReporte. Revisa la definición de la tabla.');
+    }
+    console.log('🆔 IdReporte generado:', idReporte);
 
-    // Prepara el correo
-    const mailOptions = {
+    // Envío de correo
+    await transporter.sendMail({
       from: `"UrbanWatch" <${process.env.EMAIL_USER}>`,
       to: correoCiudadano,
       subject: `UrbanWatch – Confirmación de reporte #${idReporte}`,
@@ -1029,20 +1031,15 @@ app.post('/api/guardar-reporte', async (req, res) => {
         <br/>
         <p>Gracias por ayudarnos a mejorar tu ciudad.</p>
       `
-    };
+    });
+    console.log('✉️ Correo enviado a', correoCiudadano);
 
-    // Envía el correo
-    await transporter.sendMail(mailOptions);
-
-    // Responde al front
+    // Respuesta al front
     res.json({ success: true, idReporte });
 
   } catch (err) {
-    console.error('Error al guardar reporte o enviar correo:', err);
-    res.status(500).json({
-      success: false,
-      message: err.message
-    });
+    console.error('❌ Error en /api/guardar-reporte:', err);
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 
