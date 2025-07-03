@@ -149,91 +149,95 @@ crearTablas();
 // Expresión regular: 8 caracteres, al menos 1 mayúscula, 1 dígito y 1 carácter especial
 const pwdRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8}$/;
 
+// ———————————————————————————————
+// 1) Registro de nuevos ciudadanos
+// ———————————————————————————————
 app.post('/api/registro', async (req, res) => {
+  const { nombre, email, password } = req.body;
+
+  // Validación de contraseña
+  if (!pwdRegex.test(password)) {
+    return res.status(400).json({
+      success: false,
+      message: 'La contraseña debe tener mínimo 8 caracteres, al menos una mayúscula, un número y un carácter especial.'
+    });
+  }
+
+  // Generar token de verificación y fecha de expiración (24h)
+  const token   = crypto.randomBytes(32).toString('hex');
+  const expires = new Date(Date.now() + 24*3600*1000);
+
   try {
-    const { nombre, email, password } = req.body;
-
-    // Validación
-    if (!pwdRegex.test(password)) {
-      return res.status(400).json({
-        success: false,
-        message: 'La contraseña debe tener 8 caracteres exactos, al menos una mayúscula, un número y un carácter especial.'
-      });
-    }
-
-    // Token y expiración
-    const token   = crypto.randomBytes(32).toString('hex');
-    const expires = new Date(Date.now() + 1000*60*60*24);
-
-    // Guardar en Ciudadanos
+    // Insertar en la tabla Ciudadanos
     await sql.query`
-      INSERT INTO Ciudadanos 
-        (Nombre, Correo, Contrasena, verificationToken, tokenExpires)
+      INSERT INTO Ciudadanos
+        (Nombre, Correo, Contrasena, verified, verificationToken, tokenExpires)
       VALUES
-        (${nombre}, ${email}, ${password}, ${token}, ${expires})
+        (${nombre}, ${email}, ${password}, 0, ${token}, ${expires})
     `;
 
-    // Enviar correo
+    // Construir enlace absoluto
     const verifyUrl = `${BASE_URL}/verify-email?token=${token}`;
+
+    // Enviar correo
     await transporter.sendMail({
-      from:    '"UrbanWatch" <no-reply@urbanwatch.com>',
+      from:    `"UrbanWatch" <${process.env.EMAIL_USER}>`,
       to:      email,
       subject: 'Verifica tu correo en UrbanWatch',
       html: `
-        <p>Hola ${nombre},</p>
-        <p>Para activar tu cuenta haz clic aquí:</p>
-        <a href="${verifyUrl}">Verificar correo</a>
+        <p>¡Hola ${nombre}!</p>
+        <p>Para activar tu cuenta haz clic en el siguiente enlace:</p>
+        <p><a href="${verifyUrl}" target="_blank">Verificar mi correo</a></p>
+        <p>Este enlace expira en 24 horas.</p>
       `
     });
 
     return res.json({
       success: true,
-      message: 'Revisa tu correo para verificar tu cuenta.'
+      message: 'Registro exitoso. Revisa tu correo para verificar tu cuenta.'
     });
 
   } catch (err) {
     console.error('Error en POST /api/registro:', err);
-    const isDup = err.number === 2627;
-    return res
-      .status(isDup ? 400 : 500)
-      .json({
-        success: false,
-        message: isDup
-          ? 'El correo ya está registrado.'
-          : 'Error interno del servidor.'
-      });
+    const isDup = err.number === 2627; // clave duplicada
+    return res.status(isDup ? 400 : 500).json({
+      success: false,
+      message: isDup
+        ? 'El correo ya está registrado.'
+        : 'Error interno del servidor.'
+    });
   }
 });
 
-// 5) Ruta GET /verify-email (opcional)
-app.get('/verify-email', async (req, res) => {
-  // … tu lógica de verificación …
-});
-
-// 6) Levantar servidor
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor escuchando en ${BASE_URL}`);
-});
-
-
-
-// Verificación de correo
+// ———————————————————————————————
+// 2) Verificación de correo
+// ———————————————————————————————
 app.get('/verify-email', async (req, res) => {
   const token = req.query.token;
-  if (!token) return res.status(400).send('Token faltante.');
+  if (!token) {
+    return res.status(400).send('<h2>Falta el token de verificación.</h2>');
+  }
 
   try {
-    await sql.connect(dbConfig);
+    // Comprobar token válido y no expirado
     const result = await sql.query`
-      SELECT * FROM Ciudadanos
+      SELECT Id, Nombre
+      FROM Ciudadanos
       WHERE verificationToken = ${token}
         AND tokenExpires > GETDATE()
         AND verified = 0
     `;
+
     if (result.recordset.length === 0) {
-      return res.send('<h2>Enlace inválido o expirado.</h2>');
+      return res
+        .status(404)
+        .send(`
+          <h2>Enlace inválido o expirado.</h2>
+          <p><a href="${BASE_URL}/login-ciudadano.html">Volver al inicio</a></p>
+        `);
     }
 
+    // Marcar como verificado
     await sql.query`
       UPDATE Ciudadanos
       SET verified = 1,
@@ -242,61 +246,65 @@ app.get('/verify-email', async (req, res) => {
       WHERE verificationToken = ${token}
     `;
 
-    return res.redirect('/login-ciudadano.html?verified=true');
+    // HTML intermedio que redirige al login con meta-refresh
+    return res.send(`
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <title>¡Verificación Completa!</title>
+        <meta http-equiv="refresh" content="2;url=${BASE_URL}/login-ciudadano.html?verified=true">
+        <style>
+          body { font-family:sans-serif; text-align:center; padding:2rem; }
+        </style>
+      </head>
+      <body>
+        <h2>¡Cuenta verificada con éxito!</h2>
+        <p>Serás redirigido al inicio de sesión…</p>
+        <p><a href="${BASE_URL}/login-ciudadano.html?verified=true">Si no te redirige, haz clic aquí</a></p>
+      </body>
+      </html>
+    `);
+
   } catch (err) {
-    console.error(err);
-    return res.status(500).send('Error interno.');
+    console.error('Error en GET /verify-email:', err);
+    return res.status(500).send('<h2>Error interno del servidor.</h2>');
   }
 });
 
-// Login (rechaza no verificados)
-// Login SIN comprobar verified
+
+// ———————————————————————————————
+// 3) Login de ciudadano (rechaza no verificados)
+// ———————————————————————————————
 app.post('/api/login', async (req, res) => {
-  console.log('📥 [POST /api/login] body:', req.body);
+  const { email, password } = req.body;
+
   try {
-    const { email, password } = req.body;
-
-    console.log('🔗 Conectando a BD...');
-    await sql.connect(dbConfig);
-    console.log('✅ Conectado a BD');
-
-    console.log(`🔎 Buscando usuario ${email}`);
     const result = await sql.query`
-      SELECT 
-        Id,          -- tu PK
-        Nombre,
-        Correo,
-        Contrasena,
-        verified
+      SELECT Id, Nombre, Correo, Contrasena, verified
       FROM Ciudadanos
       WHERE Correo = ${email}
     `;
-    console.log('📊 Resultado consulta:', result.recordset);
 
     if (result.recordset.length === 0) {
-      console.log('❌ Usuario no encontrado');
       return res.status(401).json({ success: false, message: 'Credenciales inválidas.' });
     }
     const user = result.recordset[0];
 
     if (!user.verified) {
-      console.log('❌ Cuenta no verificada');
       return res.status(403).json({ success: false, message: 'Cuenta no verificada.' });
     }
 
     if (user.Contrasena !== password) {
-      console.log('❌ Contraseña incorrecta');
       return res.status(401).json({ success: false, message: 'Credenciales inválidas.' });
     }
 
-    console.log('🔐 Generando JWT');
-const token = jwt.sign(
-  { id: user.Id, email: user.Correo },
-  process.env.JWT_SECRET,
-  { expiresIn: '2h' }
-);
-console.log('✅ JWT generado');
-
+    // Generar JWT
+    const token = jwt.sign(
+      { id: user.Id, email: user.Correo },
+      process.env.JWT_SECRET,
+      { expiresIn: '2h' }
+    );
 
     return res.json({
       success: true,
@@ -309,16 +317,16 @@ console.log('✅ JWT generado');
     });
 
   } catch (err) {
-    console.error('❌ Error en POST /api/login:', err);
-    return res.status(500).json({ success: false, message: 'Error interno del servidor' });
+    console.error('Error en POST /api/login:', err);
+    return res.status(500).json({ success: false, message: 'Error interno del servidor.' });
   }
 });
 
-// Arranque del servidor
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en ${BASE_URL}`);
-});
 
+// 6) Levantar servidor
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor escuchando en ${BASE_URL}`);
+});
 
 // Recuperación de contraseña - Enviar enlace
 app.post('/api/recover-password', async (req, res) => {
