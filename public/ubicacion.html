@@ -82,7 +82,7 @@
   </main>
 
   <script>
-    // Límites para San José del Cabo
+    // 1) Configuración del mapa con límites
     const bounds = [[22.98, -109.82], [23.14, -109.58]];
     const map = L.map('map', {
       maxBounds: bounds,
@@ -96,48 +96,58 @@
       noWrap: true
     }).addTo(map);
 
+    // 2) Variables DOM
     let marker = null;
-    const direccionResultado = document.getElementById('direccion-resultado');
-    const inputDireccion     = document.getElementById('direccion');
-    const btnSiguiente       = document.getElementById('next-button');
+    const dirRes  = document.getElementById('direccion-resultado');
+    const input   = document.getElementById('direccion');
+    const btnNext = document.getElementById('next-button');
 
-    // Coloca marcador y obtiene texto inverso
-    map.on('click', async e => {
-      const { lat, lng } = e.latlng;
-      // Colocar o mover marcador
-      if (!marker) marker = L.marker([lat,lng]).addTo(map);
-      else marker.setLatLng([lat,lng]);
+    // 3) Palabras que indican agua (para rechazar)
+    const aguaKeywords = ["mar", "bahía", "océano", "golfo", "lago", "laguna"];
 
-      // Obtener dirección
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
-        );
-        const data = await res.json();
-        const dir  = data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-        aplicarDireccion(dir);
-      } catch {
-        alert('No se pudo obtener la dirección.');
-      }
-    });
-
-    // Al escribir manualmente
-    inputDireccion.addEventListener('input', () => {
-      const text = inputDireccion.value.trim();
-      aplicarDireccion(text);
-    });
-
+    // 4) Función para aplicar y mostrar la dirección
     function aplicarDireccion(dir) {
-      direccionResultado.textContent = dir || 'Ninguna';
-      inputDireccion.value          = dir;
-      btnSiguiente.disabled         = !dir;
+      dirRes.textContent   = dir || 'Ninguna';
+      input.value          = dir;
+      btnNext.disabled     = !dir;
       if (dir) localStorage.setItem('direccionProblema', dir);
     }
 
-    // Avanzar
-    btnSiguiente.addEventListener('click', () => {
-      if (!inputDireccion.value.trim()) {
-        alert('Seleccione o escriba una dirección para continuar.');
+    // 5) Al hacer clic en el mapa
+    map.on('click', async e => {
+      const { lat, lng } = e.latlng;
+      // colocar o mover marcador
+      if (!marker) marker = L.marker([lat, lng]).addTo(map);
+      else marker.setLatLng([lat, lng]);
+
+      // obtener dirección inversa
+      try {
+        const resp = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
+        );
+        const data = await resp.json();
+        const dir  = data.display_name || "";
+        // validamos que no sea mar
+        const baja = dir.toLowerCase();
+        if (aguaKeywords.some(k => baja.includes(k))) {
+          alert("Ese punto está sobre agua. Por favor, selecciona tierra firme.");
+          return;
+        }
+        aplicarDireccion(dir);
+      } catch {
+        alert("No se pudo obtener la dirección. Intenta de nuevo.");
+      }
+    });
+
+    // 6) Al escribir manualmente
+    input.addEventListener('input', () => {
+      aplicarDireccion(input.value.trim());
+    });
+
+    // 7) Botón “Siguiente”
+    btnNext.addEventListener('click', () => {
+      if (!input.value.trim()) {
+        alert("Debes seleccionar o escribir una dirección antes de continuar.");
       } else {
         window.location.href = 'detalles.html';
       }
@@ -145,5 +155,6 @@
   </script>
 </body>
 </html>
+
 
 
