@@ -328,17 +328,21 @@ app.listen(PORT, () => {
   console.log(`🚀 Servidor escuchando en ${BASE_URL}`);
 });
 
-// 1) Ruta para enviar el correo de recuperación
-app.post('/api/recover-password', async (req, res) => {
+app.post('/api/recover-password', async (req,res) => {
+  console.log('📬 [recover-password] body:', req.body);
   const { email } = req.body;
   try {
-    // tu lógica de SQL y envio de mail…
-    return res.json({ success: true, message: 'Email enviado' });
-  } catch (err) {
-    console.error('recover-password:', err);
+    // …lógica SQL…
+    console.log('📧 Enviando mail a:', email);
+    await transporter.sendMail(mailOptions);
+    console.log('✅ Mail enviado con éxito');
+    return res.json({ success:true, message:'Revisa tu correo' });
+  } catch(err) {
+    console.error('❌ Error en recover-password:', err);
     return res.status(500).json({ success:false, message:'Error interno' });
   }
 });
+
 
 // Verificar token de recuperación
 app.get('/api/verify-reset-token/:token', async (req, res) => {
