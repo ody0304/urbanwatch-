@@ -1636,5 +1636,32 @@ app.get('/api/debug-reportes/:dependencia', async (req, res) => {
     }
 });
 
+// Devuelve sólo los reportes de un correo de ciudadano
+app.get('/api/reportes-recientes/:correo', async (req, res) => {
+  const correo = req.params.correo;
+  try {
+    // Asegúrate de usar la conexión ya configurada
+    const result = await sql.query`
+      SELECT 
+        r.IdReporte,
+        r.Categoria,
+        er.Estado,
+        r.FechaCreacion
+      FROM Reportes r
+      LEFT JOIN (
+        -- obtenemos el estado más reciente
+        SELECT IdReporte, Estado,
+               ROW_NUMBER() OVER (PARTITION BY IdReporte ORDER BY Fecha DESC) as rn
+        FROM EstadoReporte
+      ) er ON r.IdReporte = er.IdReporte AND er.rn = 1
+      WHERE r.CorreoCiudadano = ${correo}
+      ORDER BY r.FechaCreacion DESC
+    `;
+    return res.json(result.recordset);
+  } catch (err) {
+    console.error('Error en GET /api/reportes-recientes/:correo', err);
+    return res.status(500).json({ error: 'Error al obtener reportes' });
+  }
+});
 
 

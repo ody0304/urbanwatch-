@@ -144,81 +144,72 @@
 
         // Función para cargar reportes del ciudadano autenticado
 async function cargarTodosLosReportes() {
-    const loadButton = document.querySelector('.load-reports-button');
-    const tableBody = document.getElementById('reportesTableBody');
-    const emptyState = document.getElementById('emptyState');
-    
-    // Obtener el correo del ciudadano desde localStorage
-    const correoCiudadano = localStorage.getItem('correoCiudadano');
-    
-    if (!correoCiudadano) {
-        alert('No se ha detectado una sesión de usuario. Por favor, inicie sesión nuevamente.');
-        window.location.href = 'login.html'; // o tu página de login
-        return;
-    }
-    
-    // Cambiar botón a estado de carga
-    loadButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
-    loadButton.disabled = true;
+  const loadButton      = document.querySelector('.load-reports-button');
+  const tableBody       = document.getElementById('reportesTableBody');
+  const emptyState      = document.getElementById('emptyState');
+  const correoCiudadano = localStorage.getItem('correoCiudadano');
 
-    try {
-        // Usar el endpoint que filtra por correo del ciudadano
-        const response = await fetch(`/api/reportes-recientes/${encodeURIComponent(correoCiudadano)}`);
-        
-        if (response.ok) {
-            const reportes = await response.json();
-            
-            // Limpiar tabla
-            tableBody.innerHTML = '';
-            
-            if (reportes.length > 0) {
-                emptyState.style.display = 'none';
-                
-                reportes.forEach(reporte => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td><strong>${reporte.IdReporte}</strong></td>
-                        <td>${reporte.Categoria}</td>
-                        <td>
-                            <span class="status-badge status-${getEstadoClass(reporte.Estado || 'Pendiente')}">
-                                ${reporte.Estado || 'Pendiente'}
-                            </span>
-                        </td>
-                        <td>${formatearFecha(reporte.FechaCreacion)}</td>
-                        <td>
-                            <button class="detail-button" onclick="verDetalle(${reporte.IdReporte})">
-                                <i class="fas fa-eye"></i> Ver
-                            </button>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
-                });
-            } else {
-                emptyState.innerHTML = `
-                    <i class="fas fa-inbox"></i>
-                    <h5>No tiene reportes registrados</h5>
-                    <p>Aún no ha enviado ningún reporte con este correo electrónico</p>
-                `;
-                emptyState.style.display = 'block';
-            }
-        } else {
-            throw new Error('Error al cargar reportes');
-        }
-    } catch (error) {
-        console.error("❌ Error al cargar reportes:", error);
-        alert("Hubo un problema al cargar sus reportes.");
-        emptyState.innerHTML = `
-            <i class="fas fa-exclamation-triangle"></i>
-            <h5>Error al cargar reportes</h5>
-            <p>No se pudieron cargar sus reportes. Intente nuevamente.</p>
+  if (!correoCiudadano) {
+    alert('No se ha detectado una sesión de usuario. Por favor, inicie sesión nuevamente.');
+    window.location.href = 'login-ciudadano.html';
+    return;
+  }
+
+  loadButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
+  loadButton.disabled  = true;
+
+  try {
+    const resp = await fetch(
+      `/api/reportes-recientes/${encodeURIComponent(correoCiudadano)}`
+    );
+    if (!resp.ok) throw new Error(`Status ${resp.status}`);
+
+    const reportes = await resp.json();
+    tableBody.innerHTML = '';
+
+    if (reportes.length === 0) {
+      emptyState.innerHTML = `
+        <i class="fas fa-inbox"></i>
+        <h5>No tiene reportes registrados</h5>
+        <p>Aún no ha enviado ningún reporte con este correo electrónico</p>
+      `;
+      emptyState.style.display = 'block';
+    } else {
+      emptyState.style.display = 'none';
+      reportes.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${r.IdReporte}</strong></td>
+          <td>${r.Categoria}</td>
+          <td>
+            <span class="status-badge status-${getEstadoClass(r.Estado || 'Pendiente')}">
+              ${r.Estado || 'Pendiente'}
+            </span>
+          </td>
+          <td>${formatearFecha(r.FechaCreacion)}</td>
+          <td>
+            <button class="detail-button" onclick="verDetalle(${r.IdReporte})">
+              <i class="fas fa-eye"></i> Ver
+            </button>
+          </td>
         `;
-        emptyState.style.display = 'block';
-    } finally {
-        // Restaurar botón
-        loadButton.innerHTML = '<i class="fas fa-sync-alt"></i> Cargar mis reportes';
-        loadButton.disabled = false;
+        tableBody.appendChild(tr);
+      });
     }
+  } catch (err) {
+    console.error('❌ Error al cargar mis reportes:', err);
+    emptyState.innerHTML = `
+      <i class="fas fa-exclamation-triangle"></i>
+      <h5>Error al cargar reportes</h5>
+      <p>No se pudieron cargar sus reportes. Intente nuevamente.</p>
+    `;
+    emptyState.style.display = 'block';
+  } finally {
+    loadButton.innerHTML = '<i class="fas fa-sync-alt"></i> Cargar mis reportes';
+    loadButton.disabled  = false;
+  }
 }
+
 
         function getEstadoClass(estado) {
             const clases = {

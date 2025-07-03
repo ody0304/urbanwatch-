@@ -66,17 +66,17 @@
   </main>
 
   <script>
-    // 1) Al cargar la página, chequear si viene ?verified=true
+    // 1) Si vengo con ?verified=true, aviso y quito la querystring
     window.addEventListener('DOMContentLoaded', () => {
       const params = new URLSearchParams(window.location.search);
       if (params.get('verified') === 'true') {
         alert('¡Cuenta verificada con éxito! Ya puedes iniciar sesión.');
-        // limpiar la querystring sin recargar
+        // Limpio la URL para no mostrar siempre la alerta
         window.history.replaceState({}, '', window.location.pathname);
       }
     });
 
-    // 2) Manejo del formulario de login
+    // 2) Manejo del submit
     document.getElementById('login-form').addEventListener('submit', async e => {
       e.preventDefault();
 
@@ -85,7 +85,7 @@
       const email    = emailEl.value.trim();
       const password = pwdEl.value;
 
-      // Validación simple de formato
+      // Validación de formato de correo
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         emailEl.setCustomValidity('Ingresa un correo válido');
@@ -100,17 +100,18 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password })
         });
-
         const result = await resp.json().catch(() => ({}));
 
         if (resp.ok && result.success) {
-          // Guardar token y datos
+          // 3) Guardo el token y los datos del usuario...
           localStorage.setItem('tokenCiudadano', result.token);
+          // ← AÑADIDO: guardo el correo bajo la clave que luego uso
+          localStorage.setItem('correoCiudadano', result.user.correo);
           localStorage.setItem(
             'ciudadanoData',
             JSON.stringify({ nombre: result.user.nombre, correo: result.user.correo })
           );
-          // Redirigir al portal
+          // ...y redirijo al portal
           window.location.href = '/ciudadanos-portal.html';
         } else {
           alert(result.message || 'Usuario o contraseña incorrectos');
