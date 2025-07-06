@@ -7,34 +7,46 @@ const crypto     = require('crypto');
 const cors       = require('cors');
 const nodemailer = require('nodemailer');
 const dbConfig   = require('./dbconfig');
-const jwt        = require('jsonwebtoken');   // ← AÑADE ESTA LÍNEA
+const jwt        = require('jsonwebtoken');
+
 const app  = express();
 const PORT = process.env.PORT || 3000;
-const BASE_URL = process.env.BASE_URL || `https://urbanwatch.onrender.com`;
+const BASE_URL = process.env.BASE_URL;
 
-// Sólo UNA vez, antes de usarlo:
+// Configuración de transporte SMTP
 const transporter = nodemailer.createTransport({
-  service: 'gmail',               // puedes usar 'gmail' en vez de host/port
+  service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS  // tu app password de Gmail
+    pass: process.env.EMAIL_PASS
   }
 });
 
-// 2) Middlewares y static
+// Middlewares
 app.use(express.json({ limit: '10mb' }));
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 3) Conectar BD
+// Conexión a la base de datos
 sql.connect(dbConfig)
   .then(() => console.log('✅ Conectado a la base de datos'))
   .catch(err => console.error('❌ Error al conectar a la BD:', err));
 
-// Verificación (opcional):
+// Verificación de SMTP
 transporter.verify((err, success) => {
   if (err) console.warn('⚠️ SMTP warning:', err.message);
   else     console.log('✅ SMTP listo para enviar correos');
+});
+
+// Endpoint ping para verificar conexión a BD
+app.get('/ping-db', async (req, res) => {
+  try {
+    const pool = await sql.connect(dbConfig);
+    const result = await pool.request().query('SELECT 1 AS OK');
+    res.json({ ok: result.recordset[0].OK });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.post('/api/test-email', async (req, res) => {
