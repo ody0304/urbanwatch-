@@ -38,6 +38,10 @@ transporter.verify((err, success) => {
   else     console.log('✅ SMTP listo para enviar correos');
 });
 
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'inicio.html'));
+});
+
 // Endpoint ping para verificar conexión a BD
 app.get('/ping-db', async (req, res) => {
   try {
